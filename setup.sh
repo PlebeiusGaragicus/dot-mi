@@ -57,6 +57,11 @@ create_team() {
     ln -sf "../../../shared/themes/$(basename "$theme")" "$team_dir/themes/$(basename "$theme")"
   done
 
+  # Symlink shared bin directory.
+  # pi downloads fd/rg here on first run; the symlink means all teams share one copy.
+  mkdir -p "$SHARED_DIR/bin"
+  ln -sf "../../shared/bin" "$team_dir/bin"
+
   # Symlink shared model provider config
   ln -sf "../../shared/models.json" "$team_dir/models.json"
 
@@ -69,6 +74,7 @@ create_team() {
   echo "    prompts/             (add workflow prompt templates here)"
   echo "    skills/              (individual skills symlinked from shared)"
   echo "    themes/              (individual themes symlinked from shared)"
+  echo "    bin/                 (symlinked to shared/bin, gitignored contents)"
   echo "    sessions/            (runtime session data, gitignored)"
   echo "    models.json          (symlinked to shared)"
   echo ""

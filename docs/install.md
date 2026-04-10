@@ -103,11 +103,12 @@ teams/<team-name>/
 │   └── ...
 ├── themes/              (individual themes symlinked from shared)
 │   └── synthwave.json -> ../../../shared/themes/synthwave.json
+├── bin -> ../../shared/bin  (shared binaries -- fd, rg downloaded on first run)
 ├── sessions/            (runtime session storage, gitignored)
 └── models.json -> ../../shared/models.json
 ```
 
-The `extensions/` and `models.json` are symlinks to `shared/`. Skills are symlinked individually -- remove a symlink to exclude a skill from a team. Agents and prompts are per-team. Individual agents can further restrict skills via frontmatter (`skills`, `no-skills`).
+The `extensions/`, `models.json`, and `bin/` are symlinks to `shared/`. Skills and themes are symlinked individually -- remove a symlink to exclude a skill or theme from a team. The `bin/` symlink means pi downloads `fd` and `rg` once into `shared/bin/` and all teams share them. Agents and prompts are per-team. Individual agents can further restrict skills via frontmatter (`skills`, `no-skills`).
 
 Example:
 

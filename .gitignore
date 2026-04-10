@@ -11,7 +11,10 @@ teams/*/auth.json
 # Pi runtime state
 teams/*/settings.json
 teams/*/.cache/
-teams/*/bin/
+
+# Downloaded binaries (fd, rg) -- shared across teams via symlinks
+shared/bin/*
+!shared/bin/.gitkeep
 
 # Submodule build artifacts
 pi-mono/node_modules/

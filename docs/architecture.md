@@ -8,6 +8,7 @@ pi resolves its config root via `getAgentDir()` in the coding-agent package. Thi
 - `agents/` -- agent definition markdown files
 - `prompts/` -- prompt template files
 - `skills/` -- skill definitions (SKILL.md files)
+- `bin/` -- downloaded tool binaries (fd, rg)
 - `sessions/` -- conversation history
 - `settings.json` -- pi settings
 - `models.json` -- custom model providers
@@ -32,6 +33,7 @@ dot-mi/
 │   │   └── searxng/
 │   ├── themes/               # Shared themes
 │   │   └── synthwave.json
+│   ├── bin/                  # Downloaded binaries (fd, rg) -- gitignored contents
 │   └── models.json           # Custom model provider config
 ├── teams/                    # One directory per team
 │   ├── recon/
@@ -40,6 +42,7 @@ dot-mi/
 │   │   ├── prompts/          # implement.md
 │   │   ├── skills/           # ← individual symlinks to shared/skills/*/
 │   │   ├── themes/           # ← individual symlinks to shared/themes/*
+│   │   ├── bin/              # ← symlink to shared/bin/
 │   │   ├── sessions/         # runtime (gitignored)
 │   │   └── models.json       # ← symlink to shared/models.json
 │   ├── impl/
@@ -101,7 +104,7 @@ Each team directory is a complete pi config root. This provides:
 - **Session isolation** -- separate conversation history per team
 - **Settings isolation** -- per-team model preferences and configuration
 
-Shared resources (extensions, skills, models) are symlinked from `shared/` to avoid duplication while preserving isolation boundaries. Individual agents can further restrict which skills they load via frontmatter.
+Shared resources (extensions, skills, themes, models, binaries) are symlinked from `shared/` to avoid duplication while preserving isolation boundaries. Downloaded binaries (`fd`, `rg`) are written once to `shared/bin/` through directory symlinks and shared across all teams automatically. Individual agents can further restrict which skills they load via frontmatter.
 
 For shared authentication across teams, symlink `auth.json`:
 
