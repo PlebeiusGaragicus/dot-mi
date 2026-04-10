@@ -11,14 +11,22 @@ dot-mi manager
 Usage: $(basename "$0") <command> [args]
 
 Commands:
-  create <team-name>         Create a new team directory with shared extension symlinks
-  create-agent <agent-name>  Create a standalone agent directory with a stub extension
-  list                       List existing teams and standalone agents
-  link-auth <src> <dst>      Symlink auth.json from one team/agent (or path) into another
+  create [--workspace] <team-name>         Create a new team directory with shared extension symlinks
+  create-agent [--workspace] <agent-name>  Create a standalone agent directory with a stub extension
+  list                                     List existing teams and standalone agents
+  link-auth <src> <dst>                    Symlink auth.json from one team/agent (or path) into another
+
+Options:
+  --workspace   Mark as a workspace agent/team. Creates a workspace.conf file so the
+                auto-generated alias launches pi in a fresh dated directory instead of
+                the user's current directory. Edit workspace.conf to list subdirectories
+                that should be pre-created in each workspace run.
 
 Examples:
   $(basename "$0") create blog
+  $(basename "$0") create --workspace deepresearch
   $(basename "$0") create-agent twenty-questions
+  $(basename "$0") create-agent --workspace my-researcher
   $(basename "$0") list
   $(basename "$0") link-auth recon blog
 EOF
@@ -26,6 +34,11 @@ EOF
 }
 
 create_team() {
+  local workspace=false
+  if [ "$1" = "--workspace" ]; then
+    workspace=true
+    shift
+  fi
   local team_name="$1"
   local team_dir="$DOT_MI_DIR/teams/$team_name"
 
@@ -84,7 +97,19 @@ SETTINGS
     echo "Warning: figlet not installed -- skipping banner.txt (brew install figlet)"
   fi
 
-  echo "Created team at $team_dir"
+  if [ "$workspace" = true ]; then
+    cat > "$team_dir/workspace.conf" <<'WSCONF'
+# Subdirectories to pre-create in each workspace run.
+# One directory name per line. The alias reads this file
+# and runs mkdir -p for each entry before launching pi.
+WSCONF
+    echo "Created workspace.conf (edit to add workspace subdirectories)"
+  fi
+
+  local mode_label="in-situ"
+  [ "$workspace" = true ] && mode_label="workspace"
+
+  echo "Created $mode_label team at $team_dir"
   echo ""
   echo "Directory layout:"
   echo "  $team_dir/"
@@ -98,14 +123,25 @@ SETTINGS
   echo "    models.json          (symlinked to shared)"
   echo "    settings.json        (theme + quietStartup defaults)"
   echo "    banner.txt           (startup branding -- edit to customize)"
+  [ "$workspace" = true ] && echo "    workspace.conf       (workspace subdirectory list)"
   echo ""
   echo "Next steps:"
   echo "  1. Add agent .md files to $team_dir/agents/"
   echo "  2. Add prompt templates to $team_dir/prompts/"
-  echo "  3. Source bash_aliases and invoke: pi-$team_name \"your task\""
+  if [ "$workspace" = true ]; then
+    echo "  3. Edit workspace.conf to list subdirectories for each run"
+    echo "  4. Source bash_aliases and invoke: pi-$team_name \"your task\""
+  else
+    echo "  3. Source bash_aliases and invoke: pi-$team_name \"your task\""
+  fi
 }
 
 create_agent() {
+  local workspace=false
+  if [ "$1" = "--workspace" ]; then
+    workspace=true
+    shift
+  fi
   local agent_name="$1"
   local agent_dir="$DOT_MI_DIR/agents/$agent_name"
 
@@ -164,7 +200,19 @@ SETTINGS
     echo "Warning: figlet not installed -- skipping banner.txt (brew install figlet)"
   fi
 
-  echo "Created standalone agent at $agent_dir"
+  if [ "$workspace" = true ]; then
+    cat > "$agent_dir/workspace.conf" <<'WSCONF'
+# Subdirectories to pre-create in each workspace run.
+# One directory name per line. The alias reads this file
+# and runs mkdir -p for each entry before launching pi.
+WSCONF
+    echo "Created workspace.conf (edit to add workspace subdirectories)"
+  fi
+
+  local mode_label="in-situ"
+  [ "$workspace" = true ] && mode_label="workspace"
+
+  echo "Created $mode_label standalone agent at $agent_dir"
   echo ""
   echo "Directory layout:"
   echo "  $agent_dir/"
@@ -176,10 +224,16 @@ SETTINGS
   echo "    models.json              (symlinked to shared)"
   echo "    settings.json            (theme + quietStartup defaults)"
   echo "    banner.txt               (startup branding -- edit to customize)"
+  [ "$workspace" = true ] && echo "    workspace.conf           (workspace subdirectory list)"
   echo ""
   echo "Next steps:"
   echo "  1. Edit $agent_dir/extensions/$agent_name/index.ts"
-  echo "  2. Source bash_aliases and invoke: pi-$agent_name \"your task\""
+  if [ "$workspace" = true ]; then
+    echo "  2. Edit workspace.conf to list subdirectories for each run"
+    echo "  3. Source bash_aliases and invoke: pi-$agent_name \"your task\""
+  else
+    echo "  2. Source bash_aliases and invoke: pi-$agent_name \"your task\""
+  fi
 }
 
 list_teams() {
@@ -195,9 +249,11 @@ list_teams() {
     agent_count=$(find "$dir/agents" -maxdepth 1 -name '*.md' 2>/dev/null | wc -l | tr -d ' ')
     local prompt_count
     prompt_count=$(find "$dir/prompts" -maxdepth 1 -name '*.md' 2>/dev/null | wc -l | tr -d ' ')
+    local mode="in-situ"
+    [ -f "$dir/workspace.conf" ] && mode="workspace"
     local ext_ok="no"
     [ -e "$dir/extensions/subagent-teams/index.ts" ] && ext_ok="yes"
-    echo "  $name  ($agent_count agents, $prompt_count prompts, extensions linked: $ext_ok)"
+    echo "  $name  ($mode, $agent_count agents, $prompt_count prompts, extensions linked: $ext_ok)"
   done
   if [ "$found" -eq 0 ]; then
     echo "  (none -- run '$0 create <name>' to create one)"
@@ -211,9 +267,11 @@ list_teams() {
     local name
     name=$(basename "$dir")
     agent_found=1
+    local mode="in-situ"
+    [ -f "$dir/workspace.conf" ] && mode="workspace"
     local ext_count
     ext_count=$(find "$dir/extensions" -maxdepth 2 -name 'index.ts' 2>/dev/null | wc -l | tr -d ' ')
-    echo "  $name  (extensions: $ext_count)"
+    echo "  $name  ($mode, extensions: $ext_count)"
   done
   if [ "$agent_found" -eq 0 ]; then
     echo "  (none -- run '$0 create-agent <name>' to create one)"
@@ -263,12 +321,24 @@ link_auth() {
 
 case "$1" in
   create)
-    [ $# -lt 2 ] && { echo "Error: team name required"; usage; }
-    create_team "$2"
+    shift
+    if [ "$1" = "--workspace" ]; then
+      [ $# -lt 2 ] && { echo "Error: team name required"; usage; }
+      create_team --workspace "$2"
+    else
+      [ $# -lt 1 ] && { echo "Error: team name required"; usage; }
+      create_team "$1"
+    fi
     ;;
   create-agent)
-    [ $# -lt 2 ] && { echo "Error: agent name required"; usage; }
-    create_agent "$2"
+    shift
+    if [ "$1" = "--workspace" ]; then
+      [ $# -lt 2 ] && { echo "Error: agent name required"; usage; }
+      create_agent --workspace "$2"
+    else
+      [ $# -lt 1 ] && { echo "Error: agent name required"; usage; }
+      create_agent "$1"
+    fi
     ;;
   list)
     list_teams

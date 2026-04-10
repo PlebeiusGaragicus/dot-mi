@@ -19,6 +19,10 @@ agents/*/auth.json
 agents/*/settings.json
 agents/*/.cache/
 
+# Workspace team output (research artifacts are ephemeral)
+workspaces/*/
+!workspaces/.gitkeep
+
 # Downloaded binaries (fd, rg) -- shared across teams via symlinks
 shared/bin/*
 !shared/bin/.gitkeep

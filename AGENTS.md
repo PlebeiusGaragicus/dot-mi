@@ -12,6 +12,8 @@ Two kinds of agent configurations live here:
 - **Teams** (`teams/`): Multi-agent setups with the `subagent-teams` extension for orchestrated delegation (single, parallel, chain).
 - **Standalone agents** (`agents/`): Single-agent setups with custom extensions and no subagent orchestration.
 
+Either kind can run **in-situ** (in the user's current directory) or as a **workspace** agent (in a fresh dated directory). A `workspace.conf` file marks which mode to use — see "Workspace Agents" under Key Concepts.
+
 ## Directory Structure
 
 ```
@@ -36,11 +38,14 @@ dot-mi/
 ├── teams/                    # Multi-agent team directories
 │   ├── recon/                # Reconnaissance & planning (scout, planner)
 │   ├── impl/                 # Implementation & review (worker, reviewer)
-│   └── blog/                 # Blog content (researcher, writer, editor)
+│   ├── blog/                 # Blog content (researcher, writer, editor)
+│   └── deepresearch/         # Web research (scout, collector, writer, editor)
 │
 ├── agents/                   # Standalone agent directories
 │   └── twenty-questions/     # Example: 20 questions game with TUI overlay
 │
+├── workspaces/               # Ephemeral workspace directories (gitignored contents)
+│   └── deepresearch/         # Dated subdirs created per-run
 ├── docs/                     # MkDocs documentation source
 └── pi-mono/                  # Read-only git submodule of upstream pi
 ```
@@ -61,6 +66,7 @@ teams/<name>/
 ├── themes/                   # Symlinked from shared/themes/
 ├── team-prompt.md            # Orchestrator instructions (injected into main agent)
 ├── banner.txt                # Startup branding (ASCII art + usage text)
+├── workspace.conf            # (optional) Marks as workspace agent; lists subdirs to pre-create
 ├── bin/                      # → shared/bin/
 ├── models.json               # → shared/models.json
 ├── sessions/                 # Runtime (gitignored)
@@ -81,6 +87,7 @@ agents/<name>/
 ├── skills/                   # Symlinked from shared/skills/
 ├── themes/                   # Symlinked from shared/themes/
 ├── banner.txt                # Startup branding (ASCII art + usage text)
+├── workspace.conf            # (optional) Marks as workspace agent; lists subdirs to pre-create
 ├── bin/                      # → shared/bin/
 ├── models.json               # → shared/models.json
 ├── sessions/                 # Runtime (gitignored)
@@ -205,6 +212,31 @@ Use this curl command to search: ...
 
 Skills live in `shared/skills/` and are symlinked per-skill into each team/agent's `skills/` directory.
 
+### Workspace Agents
+
+Any team or standalone agent can run as a **workspace agent** by adding a `workspace.conf` file to its directory. When present, the auto-generated alias launches pi in a fresh dated directory (`workspaces/<name>/<timestamp>/`) inside a subshell, so the user's shell stays in its original directory after pi exits.
+
+**`workspace.conf` format**: one subdirectory name per line. Lines starting with `#` are comments. Each listed directory is pre-created in the workspace before pi starts.
+
+```
+# teams/deepresearch/workspace.conf
+sources
+drafts
+subagent-sessions
+```
+
+**To convert any existing team/agent to workspace mode**: create `workspace.conf` in its directory (can be empty for a bare workspace, or list subdirectories).
+
+**To scaffold a new workspace team/agent**: use the `--workspace` flag with `setup.sh`:
+```bash
+./setup.sh create --workspace my-research-team
+./setup.sh create-agent --workspace my-scraper
+```
+
+**Subagent session logging**: When `subagent-sessions/` exists in the working directory, the `subagent-teams` extension automatically uses `--session-dir` instead of `--no-session`, enabling retrospective analysis of subagent runs.
+
+Workspace contents are gitignored (`workspaces/*/`).
+
 ### Prompt Templates
 
 Markdown files in `<teamDir>/prompts/` defining reusable workflows. Invoked via `/template-name` in pi chat. Typically chain subagents with `{previous}` placeholders and reference `$@` for user input.
@@ -242,6 +274,7 @@ Per-team orchestrator instructions, read by `subagent-teams` on startup and appe
 
 ```bash
 ./setup.sh create <team-name>
+./setup.sh create --workspace <team-name>   # workspace mode
 ```
 
 Then: add agent `.md` files to `agents/`, write `team-prompt.md`, add prompt templates.
@@ -250,6 +283,7 @@ Then: add agent `.md` files to `agents/`, write `team-prompt.md`, add prompt tem
 
 ```bash
 ./setup.sh create-agent <agent-name>
+./setup.sh create-agent --workspace <agent-name>   # workspace mode
 ```
 
 Then: edit `agents/<name>/extensions/<name>/index.ts` for custom behavior.
@@ -279,6 +313,7 @@ Then: edit `agents/<name>/extensions/<name>/index.ts` for custom behavior.
 | `teams/*/prompts/*.md` | Yes | Prompt templates |
 | `teams/*/team-prompt.md` | Yes | Team orchestrator instructions |
 | `*/banner.txt` | Yes | Startup branding (ASCII art + usage text) |
+| `*/workspace.conf` | Yes | Workspace subdirectory list (presence marks workspace mode) |
 | `agents/*/extensions/**/*.ts` | Yes | Custom agent extensions |
 | `setup.sh` | Yes | Team/agent scaffolding |
 | `bash_aliases` | Yes | Shell aliases |

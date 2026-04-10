@@ -268,7 +268,15 @@ async function runSingleAgent(
 		};
 	}
 
-	const args: string[] = ["--mode", "json", "-p", "--no-session"];
+	const effectiveCwd = cwd ?? defaultCwd;
+	const sessionDir = path.join(effectiveCwd, "subagent-sessions");
+	const useSessionDir = fs.existsSync(sessionDir);
+	const args: string[] = ["--mode", "json", "-p"];
+	if (useSessionDir) {
+		args.push("--session-dir", sessionDir);
+	} else {
+		args.push("--no-session");
+	}
 	if (agent.model) args.push("--model", agent.model);
 	if (agent.tools && agent.tools.length > 0) args.push("--tools", agent.tools.join(","));
 	if (agent.noSkills) args.push("--no-skills");

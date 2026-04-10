@@ -16,34 +16,40 @@ DOT_MI_DIR="${DOT_MI_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" && pwd)}"
 # Load API keys if present
 [ -f "$DOT_MI_DIR/.env" ] && source "$DOT_MI_DIR/.env"
 
-# ── team aliases ─────────────────────────────────────────────────────────────
+# ── workspace launcher ───────────────────────────────────────────────────────
 #
-# Each alias points PI_CODING_AGENT_DIR at a self-contained team directory.
-# pi loads extensions, agents, prompts, sessions, and settings from there.
+# Used by auto-generated aliases when a team/agent has a workspace.conf file.
+# Creates a fresh dated directory, pre-creates subdirs listed in workspace.conf,
+# then launches pi inside a subshell so the user's shell stays put after exit.
 
-pi-recon() {
-  PI_CODING_AGENT_DIR="$DOT_MI_DIR/teams/recon" pi "$@"
+_dotmi_workspace_launch() {
+  local name="$1" config_dir="$2"
+  shift 2
+  local ws="$DOT_MI_DIR/workspaces/$name/$(date +%Y-%m-%d-%H%M%S)"
+  mkdir -p "$ws"
+  while IFS= read -r subdir; do
+    [[ -n "$subdir" && "$subdir" != \#* ]] && mkdir -p "$ws/$subdir"
+  done < "$config_dir/workspace.conf"
+  echo "Workspace: $ws"
+  (cd "$ws" && PI_CODING_AGENT_DIR="$config_dir" pi "$@")
 }
 
-pi-impl() {
-  PI_CODING_AGENT_DIR="$DOT_MI_DIR/teams/impl" pi "$@"
-}
-
-pi-blog() {
-  PI_CODING_AGENT_DIR="$DOT_MI_DIR/teams/blog" pi "$@"
-}
-
-# ── standalone agent aliases ─────────────────────────────────────────────────
+# ── auto-generated aliases ──────────────────────────────────────────────────
 #
-# Auto-generated aliases for agents/ directories (single agent, custom extension).
-# Each gets a pi-<name> function pointing PI_CODING_AGENT_DIR at agents/<name>/.
+# Scans teams/ and agents/ directories and creates a pi-<name> function for each.
+# If the directory contains workspace.conf, the alias launches in a fresh dated
+# workspace directory. Otherwise it runs in-situ (the user's current directory).
 
-for _dotmi_agent_dir in "$DOT_MI_DIR"/agents/*/; do
-  [ -d "$_dotmi_agent_dir" ] || continue
-  _dotmi_agent_name=$(basename "$_dotmi_agent_dir")
-  eval "pi-${_dotmi_agent_name}() { PI_CODING_AGENT_DIR=\"\$DOT_MI_DIR/agents/${_dotmi_agent_name}\" pi \"\$@\"; }"
+for _dotmi_dir in "$DOT_MI_DIR"/{teams,agents}/*/; do
+  [ -d "$_dotmi_dir" ] || continue
+  _dotmi_name=$(basename "$_dotmi_dir")
+  if [ -f "$_dotmi_dir/workspace.conf" ]; then
+    eval "pi-${_dotmi_name}() { _dotmi_workspace_launch \"${_dotmi_name}\" \"$_dotmi_dir\" \"\$@\"; }"
+  else
+    eval "pi-${_dotmi_name}() { PI_CODING_AGENT_DIR=\"$_dotmi_dir\" pi \"\$@\"; }"
+  fi
 done
-unset _dotmi_agent_dir _dotmi_agent_name
+unset _dotmi_dir _dotmi_name
 
 # ── standalone bot aliases ───────────────────────────────────────────────────
 #

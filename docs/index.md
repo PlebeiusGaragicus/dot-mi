@@ -30,11 +30,12 @@ pi-blog "Write a post about this project's architecture"
 
 ## Available Teams
 
-| Team | Alias | Agents | Purpose |
-|------|-------|--------|---------|
-| **recon** | `pi-recon` | scout, planner | Fast codebase reconnaissance and implementation planning |
-| **impl** | `pi-impl` | worker, reviewer | Code implementation and review |
-| **blog** | `pi-blog` | researcher, writer, editor | Blog post research, writing, and editing |
+| Team | Alias | Mode | Agents | Purpose |
+|------|-------|------|--------|---------|
+| **recon** | `pi-recon` | in-situ | scout, planner | Fast codebase reconnaissance and implementation planning |
+| **impl** | `pi-impl` | in-situ | worker, reviewer | Code implementation and review |
+| **blog** | `pi-blog` | in-situ | researcher, writer, editor | Blog post research, writing, and editing |
+| **deepresearch** | `pi-deepresearch` | workspace | scout, collector, writer, editor | Web research with workspace isolation |
 
 ## Standalone Agents
 
@@ -50,6 +51,7 @@ Standalone agents use custom extensions instead of subagent orchestration. See [
 
 ```bash
 ./setup.sh create my-team
+./setup.sh create --workspace my-research-team   # workspace mode
 ```
 
 Add agent `.md` files to `teams/my-team/agents/` and prompt templates to `teams/my-team/prompts/`.
@@ -58,8 +60,9 @@ Add agent `.md` files to `teams/my-team/agents/` and prompt templates to `teams/
 
 ```bash
 ./setup.sh create-agent my-agent
+./setup.sh create-agent --workspace my-scraper   # workspace mode
 ```
 
 Edit `agents/my-agent/extensions/my-agent/index.ts` for custom behavior.
 
-Both are invokable via auto-generated `pi-<name>` aliases after re-sourcing `bash_aliases`.
+All are invokable via auto-generated `pi-<name>` aliases after re-sourcing `bash_aliases`. Workspace agents (those with a `workspace.conf` file) launch in a fresh dated directory under `workspaces/`.
