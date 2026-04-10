@@ -1,0 +1,3 @@
+[submodule "pi-mono"]
+	path = pi-mono
+	url = git@github.com:PlebeiusGaragicus/pi-mono.git
