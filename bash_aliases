@@ -33,6 +33,18 @@ pi-blog() {
   PI_CODING_AGENT_DIR="$DOT_MI_DIR/teams/blog" pi "$@"
 }
 
+# ── standalone agent aliases ─────────────────────────────────────────────────
+#
+# Auto-generated aliases for agents/ directories (single agent, custom extension).
+# Each gets a pi-<name> function pointing PI_CODING_AGENT_DIR at agents/<name>/.
+
+for _dotmi_agent_dir in "$DOT_MI_DIR"/agents/*/; do
+  [ -d "$_dotmi_agent_dir" ] || continue
+  _dotmi_agent_name=$(basename "$_dotmi_agent_dir")
+  eval "pi-${_dotmi_agent_name}() { PI_CODING_AGENT_DIR=\"\$DOT_MI_DIR/agents/${_dotmi_agent_name}\" pi \"\$@\"; }"
+done
+unset _dotmi_agent_dir _dotmi_agent_name
+
 # ── standalone bot aliases ───────────────────────────────────────────────────
 #
 # These don't use PI_CODING_AGENT_DIR -- they pass flags directly to pi.

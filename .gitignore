@@ -12,6 +12,13 @@ teams/*/auth.json
 teams/*/settings.json
 teams/*/.cache/
 
+# Standalone agent runtime data (mirrors team patterns)
+agents/*/sessions/*
+!agents/*/sessions/.gitkeep
+agents/*/auth.json
+agents/*/settings.json
+agents/*/.cache/
+
 # Downloaded binaries (fd, rg) -- shared across teams via symlinks
 shared/bin/*
 !shared/bin/.gitkeep

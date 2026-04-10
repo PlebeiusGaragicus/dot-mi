@@ -4,9 +4,9 @@ Custom [pi](https://github.com/PlebeiusGaragicus/pi-mono) agent teams as dotfile
 
 ## What is this?
 
-dot-mi is a dotfiles-style repository for managing multiple **pi coding agent** configurations. Instead of cluttering `~/.pi/` with extensions, agents, and prompts, this repo defines self-contained **team directories** -- each with its own agents, prompts, extensions, and session history.
+dot-mi is a dotfiles-style repository for managing multiple **pi coding agent** configurations. Instead of cluttering `~/.pi/` with extensions, agents, and prompts, this repo defines self-contained **team directories** and **standalone agent directories** -- each with its own extensions, skills, and session history.
 
-A bash alias sets `PI_CODING_AGENT_DIR` to the right team directory, and you get a fully isolated pi agent team from any working directory.
+A bash alias sets `PI_CODING_AGENT_DIR` to the right directory, and you get a fully isolated pi agent configuration from any working directory.
 
 ## Quick Start
 
@@ -36,16 +36,30 @@ pi-blog "Write a post about this project's architecture"
 | **impl** | `pi-impl` | worker, reviewer | Code implementation and review |
 | **blog** | `pi-blog` | researcher, writer, editor | Blog post research, writing, and editing |
 
-## Creating a New Team
+## Standalone Agents
+
+| Agent | Alias | Purpose |
+|-------|-------|---------|
+| **twenty-questions** | `pi-twenty-questions` | 20 questions game with custom TUI overlay (extension demo) |
+
+Standalone agents use custom extensions instead of subagent orchestration. See [Standalone Agents](standalone-agents.md).
+
+## Creating New Configurations
+
+**New team** (multi-agent with subagent orchestration):
 
 ```bash
 ./setup.sh create my-team
 ```
 
-This creates a team directory with shared extensions symlinked in. Add your agent `.md` files to `teams/my-team/agents/` and prompt templates to `teams/my-team/prompts/`, then invoke with:
+Add agent `.md` files to `teams/my-team/agents/` and prompt templates to `teams/my-team/prompts/`.
+
+**New standalone agent** (single agent with custom extension):
 
 ```bash
-PI_CODING_AGENT_DIR=~/dot-mi/teams/my-team pi "your task"
+./setup.sh create-agent my-agent
 ```
 
-Or add an alias to `bash_aliases`.
+Edit `agents/my-agent/extensions/my-agent/index.ts` for custom behavior.
+
+Both are invokable via auto-generated `pi-<name>` aliases after re-sourcing `bash_aliases`.
