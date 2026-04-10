@@ -1,8 +1,8 @@
-site_name: dot-pi
-site_description: Self-improving agent dotfiles for the pi coding agent
-site_url: https://PlebeiusGaragicus.github.io/dot-pi/
-repo_url: https://github.com/PlebeiusGaragicus/dot-pi
-repo_name: dot-pi
+site_name: dot-mi
+site_description: Custom pi agent teams as dotfiles
+site_url: https://PlebeiusGaragicus.github.io/dot-mi/
+repo_url: https://github.com/PlebeiusGaragicus/dot-mi
+repo_name: dot-mi
 
 theme:
   name: material
@@ -40,8 +40,12 @@ markdown_extensions:
 
 nav:
   - Home: index.md
+  - Installation: install.md
+  - Usage Guide: usage.md
   - Architecture: architecture.md
-  - Agent Teams:
-    - Newsroom: newsroom.md
-    - Retro: retro.md
-  - Output Formats: formats.md
+  - Teams:
+    - Recon: teams/recon.md
+    - Impl: teams/impl.md
+    - Blog: teams/blog.md
+  - Reference:
+    - Subagent Extension: reference/subagent-teams.md

@@ -1,2 +1,19 @@
 .DS_Store
 .env
+
+# Runtime session data (each team gets its own sessions/ dir)
+teams/*/sessions/*
+!teams/*/sessions/.gitkeep
+
+# Auth tokens (may be symlinked across teams)
+teams/*/auth.json
+
+# Pi runtime state
+teams/*/settings.json
+teams/*/.cache/
+teams/*/bin/
+
+# Submodule build artifacts
+pi-mono/node_modules/
+pi-mono/**/node_modules/
+pi-mono/**/dist/

@@ -130,7 +130,6 @@ name: my-agent
 description: What this agent does
 team: my-team
 tools: read, grep, find, ls
-model: claude-haiku-4-5
 ---
 
 System prompt for the agent goes here.

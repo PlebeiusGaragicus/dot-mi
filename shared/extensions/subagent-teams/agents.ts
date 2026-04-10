@@ -18,6 +18,8 @@ export interface AgentConfig {
 	description: string;
 	team?: string;
 	tools?: string[];
+	skills?: string[];
+	noSkills?: boolean;
 	model?: string;
 	systemPrompt: string;
 	source: "user" | "project";
@@ -85,11 +87,20 @@ function loadAgentsFromDir(dir: string, source: "user" | "project"): AgentConfig
 			.map((t: string) => t.trim())
 			.filter(Boolean);
 
+		const skills = frontmatter.skills
+			?.split(",")
+			.map((s: string) => s.trim())
+			.filter(Boolean);
+
+		const noSkills = frontmatter["no-skills"] === "true" || frontmatter["no-skills"] === true;
+
 		agents.push({
 			name,
 			description: frontmatter.description,
 			team,
 			tools: tools && tools.length > 0 ? tools : undefined,
+			skills: skills && skills.length > 0 ? skills : undefined,
+			noSkills: noSkills || undefined,
 			model: frontmatter.model,
 			systemPrompt: body,
 			source,

@@ -24,7 +24,7 @@ import * as path from "node:path";
 import type { AgentToolResult } from "@mariozechner/pi-agent-core";
 import type { Message } from "@mariozechner/pi-ai";
 import { StringEnum } from "@mariozechner/pi-ai";
-import { type ExtensionAPI, getMarkdownTheme, withFileMutationQueue } from "@mariozechner/pi-coding-agent";
+import { type ExtensionAPI, getAgentDir, getMarkdownTheme, withFileMutationQueue } from "@mariozechner/pi-coding-agent";
 import { Container, Markdown, Spacer, Text } from "@mariozechner/pi-tui";
 import { Type } from "@sinclair/typebox";
 import { type AgentConfig, type AgentScope, discoverAgents, getAvailableTeams } from "./agents.js";
@@ -271,6 +271,14 @@ async function runSingleAgent(
 	const args: string[] = ["--mode", "json", "-p", "--no-session"];
 	if (agent.model) args.push("--model", agent.model);
 	if (agent.tools && agent.tools.length > 0) args.push("--tools", agent.tools.join(","));
+	if (agent.noSkills) args.push("--no-skills");
+	if (agent.skills && agent.skills.length > 0) {
+		const agentDir = getAgentDir();
+		for (const skill of agent.skills) {
+			const resolved = path.isAbsolute(skill) ? skill : path.join(agentDir, skill);
+			args.push("--skill", resolved);
+		}
+	}
 
 	let tmpPromptDir: string | null = null;
 	let tmpPromptPath: string | null = null;

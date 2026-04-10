@@ -104,6 +104,8 @@ export default function (pi: ExtensionAPI) {
 	 * the final assistant message has been processed.
 	 */
 	pi.on("agent_end", async (event, ctx) => {
+		if (!process.stdout.isTTY) return;
+
 		// Determine if there were tool calls in this run
 		const messages = event.messages;
 		let hadToolCalls = false;
