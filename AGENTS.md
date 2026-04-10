@@ -26,7 +26,8 @@ dot-mi/
 ├── shared/                   # Reusable resources (never used as PI_CODING_AGENT_DIR directly)
 │   ├── extensions/
 │   │   ├── subagent-teams/   # Team-aware subagent extension (index.ts + agents.ts)
-│   │   └── run-finish-notify.ts  # Desktop notification on agent completion
+│   │   ├── run-finish-notify.ts  # Desktop notification on agent completion
+│   │   └── startup-branding.ts   # Renders banner.txt as startup header
 │   ├── skills/               # Shared skill definitions (SKILL.md files)
 │   ├── themes/               # Shared themes (JSON)
 │   ├── bin/                  # Downloaded binaries (fd, rg) — gitignored contents
@@ -52,16 +53,18 @@ Each is a complete `PI_CODING_AGENT_DIR` root:
 teams/<name>/
 ├── extensions/               # Symlinked from shared/extensions/
 │   ├── subagent-teams/       # → shared/extensions/subagent-teams/
-│   └── run-finish-notify.ts  # → shared/extensions/run-finish-notify.ts
+│   ├── run-finish-notify.ts  # → shared/extensions/run-finish-notify.ts
+│   └── startup-branding.ts   # → shared/extensions/startup-branding.ts
 ├── agents/                   # Subagent definitions (team-agentname.md)
 ├── prompts/                  # Prompt templates (slash-command workflows)
 ├── skills/                   # Symlinked from shared/skills/ (per-skill)
 ├── themes/                   # Symlinked from shared/themes/
 ├── team-prompt.md            # Orchestrator instructions (injected into main agent)
+├── banner.txt                # Startup branding (ASCII art + usage text)
 ├── bin/                      # → shared/bin/
 ├── models.json               # → shared/models.json
 ├── sessions/                 # Runtime (gitignored)
-├── settings.json             # Runtime (gitignored)
+├── settings.json             # Pi settings (theme, quietStartup; gitignored)
 └── auth.json                 # API auth (gitignored, may be symlinked)
 ```
 
@@ -73,12 +76,16 @@ Same `PI_CODING_AGENT_DIR` root but without subagent orchestration:
 agents/<name>/
 ├── extensions/
 │   ├── <name>/               # Custom extension (index.ts)
-│   └── run-finish-notify.ts  # → shared/extensions/run-finish-notify.ts
+│   ├── run-finish-notify.ts  # → shared/extensions/run-finish-notify.ts
+│   └── startup-branding.ts   # → shared/extensions/startup-branding.ts
 ├── skills/                   # Symlinked from shared/skills/
 ├── themes/                   # Symlinked from shared/themes/
+├── banner.txt                # Startup branding (ASCII art + usage text)
 ├── bin/                      # → shared/bin/
 ├── models.json               # → shared/models.json
-└── sessions/                 # Runtime (gitignored)
+├── sessions/                 # Runtime (gitignored)
+├── settings.json             # Pi settings (theme, quietStartup; gitignored)
+└── auth.json                 # API auth (gitignored, may be symlinked)
 ```
 
 No `agents/` subdirectory, no `team-prompt.md`. The main pi process IS the agent. Custom behavior comes from the extension.
@@ -214,6 +221,7 @@ Per-team orchestrator instructions, read by `subagent-teams` on startup and appe
 |----------|-------------|---------------|
 | `subagent-teams` extension | `extensions/subagent-teams → ../../../shared/extensions/subagent-teams` | *(not linked)* |
 | `run-finish-notify.ts` | `extensions/run-finish-notify.ts → ../../../shared/extensions/run-finish-notify.ts` | same |
+| `startup-branding.ts` | `extensions/startup-branding.ts → ../../../shared/extensions/startup-branding.ts` | same |
 | Individual skills | `skills/<name> → ../../../shared/skills/<name>` | same |
 | Individual themes | `themes/<name>.json → ../../../shared/themes/<name>.json` | same |
 | bin directory | `bin → ../../shared/bin` | same |
@@ -270,6 +278,7 @@ Then: edit `agents/<name>/extensions/<name>/index.ts` for custom behavior.
 | `teams/*/agents/*.md` | Yes | Subagent definitions |
 | `teams/*/prompts/*.md` | Yes | Prompt templates |
 | `teams/*/team-prompt.md` | Yes | Team orchestrator instructions |
+| `*/banner.txt` | Yes | Startup branding (ASCII art + usage text) |
 | `agents/*/extensions/**/*.ts` | Yes | Custom agent extensions |
 | `setup.sh` | Yes | Team/agent scaffolding |
 | `bash_aliases` | Yes | Shell aliases |
@@ -280,5 +289,5 @@ Then: edit `agents/<name>/extensions/<name>/index.ts` for custom behavior.
 | `*/models.json` (in teams/agents) | **No** | Symlink — edit `shared/models.json` |
 | `*/bin/` | **No** | Symlink — managed by pi runtime |
 | `*/sessions/` | **No** | Runtime data — gitignored |
-| `*/settings.json` | **No** | Runtime state — gitignored |
+| `*/settings.json` | **No** | Pi settings (theme, quietStartup) — gitignored, scaffolded by `setup.sh` |
 | `*/auth.json` | **No** | Credentials — gitignored |

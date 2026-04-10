@@ -48,6 +48,27 @@ pi.on("before_agent_start", async (event) => {
 
 **Note:** This hook does **not** receive `ctx`. For user interaction at startup, write to stdout in the extension body instead (see the [twenty-questions example](#example-twenty-questions)).
 
+### `session_start`
+
+Fires when pi's interactive session initializes. Receives `ctx` with full UI access. Use it for startup customization like setting headers, themes, or widgets.
+
+```typescript
+pi.on("session_start", async (_event, ctx) => {
+    if (!ctx.hasUI) return;
+    ctx.ui.setHeader((_tui, theme) => {
+        const title = theme.bold(theme.fg("accent", "My Agent"));
+        return new Text(title, 1, 1);
+    });
+});
+```
+
+**Parameters:**
+
+- `event.reason` — why the session started (`"startup"`, `"reload"`, `"new"`, `"resume"`, `"fork"`)
+- `ctx.ui.setHeader(factory)` — replace the startup header with a custom component
+- `ctx.ui.setTheme(name)` — set the active theme
+- `ctx.ui.notify(message, type)` — show a notification
+
 ### `agent_end`
 
 Fires after the agent finishes processing (all tool calls complete, final message sent).

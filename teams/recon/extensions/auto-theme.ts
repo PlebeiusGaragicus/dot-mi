@@ -1,1 +1,0 @@
-../../../shared/extensions/auto-theme.ts

@@ -19,12 +19,15 @@ agents/<name>/
 ├── extensions/
 │   ├── <name>/               # Your custom extension
 │   │   └── index.ts
-│   └── run-finish-notify.ts  # Shared notification extension (symlinked)
+│   ├── run-finish-notify.ts  # Shared notification extension (symlinked)
+│   └── startup-branding.ts   # Shared startup branding (symlinked)
 ├── skills/                   # Per-skill symlinks from shared/skills/
 ├── themes/                   # Per-theme symlinks from shared/themes/
+├── banner.txt                # Startup branding (ASCII art + usage text)
 ├── bin/                      # → shared/bin/ (fd, rg)
 ├── models.json               # → shared/models.json
-└── sessions/                 # Runtime conversation history (gitignored)
+├── sessions/                 # Runtime conversation history (gitignored)
+└── settings.json             # Pi settings: theme, quietStartup (gitignored)
 ```
 
 The directory is a complete `PI_CODING_AGENT_DIR` root, just like a team directory. The key differences:

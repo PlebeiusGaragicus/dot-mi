@@ -41,7 +41,7 @@ create_team() {
   # pi auto-discovers extensions from <agentDir>/extensions/.
   ln -sf "../../../shared/extensions/subagent-teams" "$team_dir/extensions/subagent-teams"
   ln -sf "../../../shared/extensions/run-finish-notify.ts" "$team_dir/extensions/run-finish-notify.ts"
-  ln -sf "../../../shared/extensions/auto-theme.ts" "$team_dir/extensions/auto-theme.ts"
+  ln -sf "../../../shared/extensions/startup-branding.ts" "$team_dir/extensions/startup-branding.ts"
 
   # Symlink each shared skill individually into the team's skills/ directory.
   # pi auto-discovers skills from <agentDir>/skills/.
@@ -68,6 +68,22 @@ create_team() {
   # Symlink shared model provider config
   ln -sf "../../shared/models.json" "$team_dir/models.json"
 
+  # Scaffold default settings (theme + quiet startup)
+  cat > "$team_dir/settings.json" <<'SETTINGS'
+{
+  "theme": "synthwave",
+  "quietStartup": true
+}
+SETTINGS
+
+  # Generate startup banner with figlet (soft fail if not installed)
+  if command -v figlet &>/dev/null; then
+    { figlet -f small "$team_name"; echo "---"; echo "Team: $team_name"; } > "$team_dir/banner.txt"
+    echo "Generated banner.txt (edit to customize)"
+  else
+    echo "Warning: figlet not installed -- skipping banner.txt (brew install figlet)"
+  fi
+
   echo "Created team at $team_dir"
   echo ""
   echo "Directory layout:"
@@ -80,6 +96,8 @@ create_team() {
   echo "    bin/                 (symlinked to shared/bin, gitignored contents)"
   echo "    sessions/            (runtime session data, gitignored)"
   echo "    models.json          (symlinked to shared)"
+  echo "    settings.json        (theme + quietStartup defaults)"
+  echo "    banner.txt           (startup branding -- edit to customize)"
   echo ""
   echo "Next steps:"
   echo "  1. Add agent .md files to $team_dir/agents/"
@@ -101,7 +119,7 @@ create_agent() {
 
   # Symlink shared extensions (but NOT subagent-teams -- standalone agents don't need it).
   ln -sf "../../../shared/extensions/run-finish-notify.ts" "$agent_dir/extensions/run-finish-notify.ts"
-  ln -sf "../../../shared/extensions/auto-theme.ts" "$agent_dir/extensions/auto-theme.ts"
+  ln -sf "../../../shared/extensions/startup-branding.ts" "$agent_dir/extensions/startup-branding.ts"
 
   # Create a stub extension for the agent to customize
   cat > "$agent_dir/extensions/$agent_name/index.ts" <<'STUB'
@@ -130,6 +148,22 @@ STUB
 
   ln -sf "../../shared/models.json" "$agent_dir/models.json"
 
+  # Scaffold default settings (theme + quiet startup)
+  cat > "$agent_dir/settings.json" <<'SETTINGS'
+{
+  "theme": "synthwave",
+  "quietStartup": true
+}
+SETTINGS
+
+  # Generate startup banner with figlet (soft fail if not installed)
+  if command -v figlet &>/dev/null; then
+    { figlet -f small "$agent_name"; echo "---"; echo "Agent: $agent_name"; } > "$agent_dir/banner.txt"
+    echo "Generated banner.txt (edit to customize)"
+  else
+    echo "Warning: figlet not installed -- skipping banner.txt (brew install figlet)"
+  fi
+
   echo "Created standalone agent at $agent_dir"
   echo ""
   echo "Directory layout:"
@@ -140,6 +174,8 @@ STUB
   echo "    bin/                     (symlinked to shared/bin, gitignored contents)"
   echo "    sessions/                (runtime session data, gitignored)"
   echo "    models.json              (symlinked to shared)"
+  echo "    settings.json            (theme + quietStartup defaults)"
+  echo "    banner.txt               (startup branding -- edit to customize)"
   echo ""
   echo "Next steps:"
   echo "  1. Edit $agent_dir/extensions/$agent_name/index.ts"

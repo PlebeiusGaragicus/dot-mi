@@ -27,7 +27,8 @@ dot-mi/
 ├── shared/                   # Reusable resources (never loaded directly)
 │   ├── extensions/
 │   │   ├── subagent-teams/   # Team-aware subagent extension
-│   │   └── run-finish-notify.ts
+│   │   ├── run-finish-notify.ts
+│   │   └── startup-branding.ts  # Renders banner.txt as startup header
 │   ├── skills/               # Shared skill definitions
 │   │   ├── bowser/
 │   │   ├── nak/
@@ -43,8 +44,10 @@ dot-mi/
 │   │   ├── prompts/          # implement.md
 │   │   ├── skills/           # ← individual symlinks to shared/skills/*/
 │   │   ├── themes/           # ← individual symlinks to shared/themes/*
+│   │   ├── banner.txt        # startup branding (ASCII art + usage)
 │   │   ├── bin/              # ← symlink to shared/bin/
 │   │   ├── sessions/         # runtime (gitignored)
+│   │   ├── settings.json     # theme, quietStartup (gitignored)
 │   │   └── models.json       # ← symlink to shared/models.json
 │   ├── impl/
 │   └── blog/
@@ -52,7 +55,9 @@ dot-mi/
 │   └── twenty-questions/
 │       ├── extensions/       # Custom extension (not subagent-teams)
 │       ├── themes/           # ← symlinks to shared/themes/*
-│       └── sessions/         # runtime (gitignored)
+│       ├── banner.txt        # startup branding (ASCII art + usage)
+│       ├── sessions/         # runtime (gitignored)
+│       └── settings.json     # theme, quietStartup (gitignored)
 ├── docs/                     # This documentation (MkDocs)
 └── pi-mono/                  # Read-only reference submodule
 ```
