@@ -445,6 +445,23 @@ const SubagentParams = Type.Object({
 });
 
 export default function (pi: ExtensionAPI) {
+	const agentDir = getAgentDir();
+	const teamPromptPath = path.join(agentDir, "team-prompt.md");
+	let teamPrompt: string | null = null;
+	try {
+		if (fs.existsSync(teamPromptPath)) {
+			teamPrompt = fs.readFileSync(teamPromptPath, "utf-8").trim();
+		}
+	} catch {
+		/* ignore */
+	}
+
+	if (teamPrompt && process.stdout.isTTY) {
+		pi.on("before_agent_start", async (event) => {
+			return { systemPrompt: event.systemPrompt + "\n\n" + teamPrompt };
+		});
+	}
+
 	pi.registerTool({
 		name: "subagent",
 		label: "Subagent",
