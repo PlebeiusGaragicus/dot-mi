@@ -30,13 +30,16 @@ dot-mi/
 │   │   ├── bowser/
 │   │   ├── nak/
 │   │   └── searxng/
+│   ├── themes/               # Shared themes
+│   │   └── synthwave.json
 │   └── models.json           # Custom model provider config
 ├── teams/                    # One directory per team
 │   ├── recon/
 │   │   ├── extensions/       # ← symlinks to shared/extensions/
 │   │   ├── agents/           # recon-scout.md, recon-planner.md
 │   │   ├── prompts/          # implement.md
-│   │   ├── skills/           # ← symlink to shared/skills/
+│   │   ├── skills/           # ← individual symlinks to shared/skills/*/
+│   │   ├── themes/           # ← individual symlinks to shared/themes/*
 │   │   ├── sessions/         # runtime (gitignored)
 │   │   └── models.json       # ← symlink to shared/models.json
 │   ├── impl/
@@ -94,7 +97,7 @@ Each team directory is a complete pi config root. This provides:
 
 - **Extension isolation** -- each team loads only its own extensions
 - **Agent isolation** -- only the team's agents are visible to the LLM
-- **Skill isolation** -- per-agent skill selection via frontmatter (`skills`, `no-skills`)
+- **Skill isolation** -- per-team via individual symlinks, per-agent via frontmatter (`skills`, `no-skills`)
 - **Session isolation** -- separate conversation history per team
 - **Settings isolation** -- per-team model preferences and configuration
 

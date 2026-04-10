@@ -33,17 +33,29 @@ create_team() {
   fi
 
   echo "Creating team '$team_name'..."
-  mkdir -p "$team_dir/extensions" "$team_dir/agents" "$team_dir/prompts" "$team_dir/sessions"
+  mkdir -p "$team_dir/extensions" "$team_dir/agents" "$team_dir/prompts" "$team_dir/skills" "$team_dir/sessions"
 
   # Symlink shared extensions into the team's extensions/ directory.
   # pi auto-discovers extensions from <agentDir>/extensions/.
   ln -sf "../../../shared/extensions/subagent-teams" "$team_dir/extensions/subagent-teams"
   ln -sf "../../../shared/extensions/run-finish-notify.ts" "$team_dir/extensions/run-finish-notify.ts"
 
-  # Symlink shared skills directory.
+  # Symlink each shared skill individually into the team's skills/ directory.
   # pi auto-discovers skills from <agentDir>/skills/.
-  # Per-agent skill selection is controlled via frontmatter (skills, no-skills).
-  ln -sf "../../shared/skills" "$team_dir/skills"
+  # Remove unwanted symlinks to exclude skills from a team.
+  # Per-agent skill selection is also controlled via frontmatter (skills, no-skills).
+  for skill in "$SHARED_DIR"/skills/*/; do
+    [ -d "$skill" ] || continue
+    ln -sf "../../../shared/skills/$(basename "$skill")" "$team_dir/skills/$(basename "$skill")"
+  done
+
+  # Symlink each shared theme individually into the team's themes/ directory.
+  # pi auto-discovers themes from <agentDir>/themes/.
+  mkdir -p "$team_dir/themes"
+  for theme in "$SHARED_DIR"/themes/*.json; do
+    [ -f "$theme" ] || continue
+    ln -sf "../../../shared/themes/$(basename "$theme")" "$team_dir/themes/$(basename "$theme")"
+  done
 
   # Symlink shared model provider config
   ln -sf "../../shared/models.json" "$team_dir/models.json"
@@ -55,7 +67,8 @@ create_team() {
   echo "    extensions/          (symlinked to shared)"
   echo "    agents/              (add your agent .md files here)"
   echo "    prompts/             (add workflow prompt templates here)"
-  echo "    skills/              (symlinked to shared, per-agent via frontmatter)"
+  echo "    skills/              (individual skills symlinked from shared)"
+  echo "    themes/              (individual themes symlinked from shared)"
   echo "    sessions/            (runtime session data, gitignored)"
   echo "    models.json          (symlinked to shared)"
   echo ""

@@ -97,12 +97,17 @@ teams/<team-name>/
 │   └── run-finish-notify.ts -> ../../../shared/extensions/run-finish-notify.ts
 ├── agents/              (empty -- add your agent .md files here)
 ├── prompts/             (empty -- add prompt templates here)
-├── skills/ -> ../../shared/skills
+├── skills/              (individual skills symlinked from shared)
+│   ├── bowser -> ../../../shared/skills/bowser
+│   ├── searxng -> ../../../shared/skills/searxng
+│   └── ...
+├── themes/              (individual themes symlinked from shared)
+│   └── synthwave.json -> ../../../shared/themes/synthwave.json
 ├── sessions/            (runtime session storage, gitignored)
 └── models.json -> ../../shared/models.json
 ```
 
-The `extensions/`, `skills/`, and `models.json` are symlinks to `shared/`, so all teams use the same extension code, skill library, and model provider config. Agents and prompts are per-team. Individual agents can select which skills to load via frontmatter (`skills`, `no-skills`).
+The `extensions/` and `models.json` are symlinks to `shared/`. Skills are symlinked individually -- remove a symlink to exclude a skill from a team. Agents and prompts are per-team. Individual agents can further restrict skills via frontmatter (`skills`, `no-skills`).
 
 Example:
 
