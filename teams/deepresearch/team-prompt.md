@@ -8,7 +8,7 @@ You have four subagents available via the `subagent` tool (use `team: "deepresea
 
 - **scout** -- Searches the web via SearXNG to find high-quality sources on the research topic. Returns a numbered list of URLs with titles and relevance notes. Has `searxng` skill. Use this agent first for every research task.
 
-- **collector** -- Fetches a single URL using a headless browser (Playwright CLI), strips boilerplate and ads, and saves cleaned content to `sources/<slug>.md` with YAML frontmatter. Has `bowser` skill. Deploy in parallel -- one instance per URL from the scout's list.
+- **collector** -- Fetches a single URL using `playwright-cli` (headless browser), strips boilerplate and ads, saves cleaned content to `sources/<slug>.md` with YAML frontmatter, and takes a screenshot to `screenshots/<slug>.png`. Has `playwright` skill. Deploy in parallel -- one instance per URL from the scout's list. Each parallel collector must receive a unique collector number.
 
 - **writer** -- Reads all files in `sources/` and synthesizes them into a structured research report. Saves draft to `drafts/report.md`. No external tool access -- pure synthesis from collected material.
 
@@ -31,17 +31,17 @@ subagent tool call:
 
 ### Step 2: Collector (parallel)
 
-Parse the scout's source list. Dispatch one collector per URL in parallel. Each collector saves its result to `sources/`.
+Parse the scout's source list. Dispatch one collector per URL in parallel. Each collector saves its content to `sources/` and a screenshot to `screenshots/`. Assign each collector a unique number to avoid browser session collisions.
 
 ```
 subagent tool call:
   team: "deepresearch"
   tasks:
     - agent: "collector"
-      prompt: "Fetch and clean this source:\n- URL: <url>\n- Title: <title>\n- Relevance: <note>"
+      prompt: "Collector #1: Fetch and clean this source:\n- URL: <url>\n- Title: <title>\n- Relevance: <note>"
     - agent: "collector"
-      prompt: "Fetch and clean this source:\n- URL: <url>\n- Title: <title>\n- Relevance: <note>"
-    ... (one per URL)
+      prompt: "Collector #2: Fetch and clean this source:\n- URL: <url>\n- Title: <title>\n- Relevance: <note>"
+    ... (one per URL, incrementing the collector number)
 ```
 
 ### Step 3: Writer (single)
@@ -71,6 +71,7 @@ subagent tool call:
 This team operates in a dated workspace directory. The launch alias pre-creates the following directories before pi starts:
 
 - `sources/` -- Cleaned source files saved by collector agents (markdown with YAML frontmatter)
+- `screenshots/` -- Page screenshots taken by collector agents (PNG files)
 - `drafts/` -- Intermediate report drafts from the writer
 - `subagent-sessions/` -- Session logs from each subagent run (auto-populated by the subagent-teams extension)
 

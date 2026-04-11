@@ -65,4 +65,10 @@ Add agent `.md` files to `teams/my-team/agents/` and prompt templates to `teams/
 
 Edit `agents/my-agent/extensions/my-agent/index.ts` for custom behavior.
 
-All are invokable via auto-generated `pi-<name>` aliases after re-sourcing `bash_aliases`. Workspace agents (those with a `workspace.conf` file) launch in a fresh dated directory under `workspaces/`.
+All are invokable via auto-generated `pi-<name>` aliases after re-sourcing `bash_aliases`. Workspace agents (those with a `workspace.conf` file) launch in a fresh dated directory under `workspaces/` and support `--list` and `--resume`:
+
+```bash
+pi-deepresearch --list                      # show existing workspaces
+pi-deepresearch --resume                    # resume most recent workspace
+pi-deepresearch --resume 2026-04-10         # resume workspace matching prefix
+```

@@ -233,6 +233,14 @@ subagent-sessions
 ./setup.sh create-agent --workspace my-scraper
 ```
 
+**Resuming a workspace session**: Workspace aliases support `--resume` and `--list`:
+```bash
+pi-deepresearch --list                      # show existing workspaces
+pi-deepresearch --resume                    # resume most recent workspace
+pi-deepresearch --resume 2026-04-10         # resume workspace matching prefix
+```
+`--resume` cd's into the existing workspace directory and passes `--resume` to pi, so the session selector opens with the original session available. `--list` shows each workspace with a file count.
+
 **Subagent session logging**: When `subagent-sessions/` exists in the working directory, the `subagent-teams` extension automatically uses `--session-dir` instead of `--no-session`, enabling retrospective analysis of subagent runs.
 
 Workspace contents are gitignored (`workspaces/*/`).

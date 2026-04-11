@@ -30,7 +30,7 @@ dot-mi/
 │   │   ├── run-finish-notify.ts
 │   │   └── startup-branding.ts  # Renders banner.txt as startup header
 │   ├── skills/               # Shared skill definitions
-│   │   ├── bowser/
+│   │   ├── playwright/
 │   │   ├── nak/
 │   │   └── searxng/
 │   ├── themes/               # Shared themes

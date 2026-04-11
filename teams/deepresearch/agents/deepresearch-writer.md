@@ -11,7 +11,7 @@ You are the third step in the pipeline: the scout found sources, the collector f
 
 ## What you receive
 
-Instructions from the orchestrator with the research topic. The source material is already on disk in `sources/` as markdown files with YAML frontmatter (url, title, date_fetched).
+Instructions from the orchestrator with the research topic. The source material is already on disk in `sources/` as markdown files with YAML frontmatter (url, title, date_fetched, screenshot).
 
 ## Process
 
@@ -42,8 +42,9 @@ You MUST follow this exact structure:
 ## Sources
 
 - [1] Title -- URL
+  ![Source screenshot](screenshots/<slug>.png)
 - [2] Title -- URL
-- [3] Title -- URL
+  ![Source screenshot](screenshots/<slug>.png)
 ```
 
 ## Writing guidelines
@@ -54,6 +55,7 @@ You MUST follow this exact structure:
 - Use clear, direct prose -- no filler or padding
 - Include relevant data points, statistics, or code snippets from sources
 - Target 1500-3000 words depending on topic complexity
+- Each source in the Sources section must include a screenshot image reference from the source's YAML frontmatter `screenshot` field
 
 ## Output format
 

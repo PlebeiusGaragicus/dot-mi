@@ -21,11 +21,57 @@ DOT_MI_DIR="${DOT_MI_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" && pwd)}"
 # Used by auto-generated aliases when a team/agent has a workspace.conf file.
 # Creates a fresh dated directory, pre-creates subdirs listed in workspace.conf,
 # then launches pi inside a subshell so the user's shell stays put after exit.
+#
+# Flags (must be first argument after the alias):
+#   --list              Show existing workspaces and exit
+#   --resume [prefix]   Resume into an existing workspace (most recent, or by prefix)
 
 _dotmi_workspace_launch() {
   local name="$1" config_dir="$2"
   shift 2
-  local ws="$DOT_MI_DIR/workspaces/$name/$(date +%Y-%m-%d-%H%M%S)"
+  local ws_root="$DOT_MI_DIR/workspaces/$name"
+
+  # --list: show existing workspaces and exit
+  if [ "${1:-}" = "--list" ]; then
+    if [ ! -d "$ws_root" ] || [ -z "$(ls -A "$ws_root" 2>/dev/null)" ]; then
+      echo "No workspaces for $name"
+      return 0
+    fi
+    echo "Workspaces for $name:"
+    for d in "$ws_root"/*/; do
+      [ -d "$d" ] || continue
+      local ts=$(basename "$d")
+      local files=$(find "$d" -maxdepth 2 -type f 2>/dev/null | wc -l | tr -d ' ')
+      echo "  $ts  ($files files)"
+    done
+    return 0
+  fi
+
+  # --resume [prefix]: cd into existing workspace instead of creating new
+  if [ "${1:-}" = "--resume" ]; then
+    shift
+    local target
+    if [ -n "${1:-}" ]; then
+      target=$(ls -d "$ws_root"/"$1"* 2>/dev/null | tail -1)
+      if [ -z "$target" ]; then
+        echo "No workspace matching '$1' in $ws_root"
+        return 1
+      fi
+      shift
+    else
+      target=$(ls -dt "$ws_root"/*/ 2>/dev/null | head -1)
+      if [ -z "$target" ]; then
+        echo "No workspaces to resume for $name"
+        return 1
+      fi
+    fi
+    echo "Resuming: $target"
+    (cd "$target" && PI_CODING_AGENT_DIR="$config_dir" pi --resume "$@")
+    return
+  fi
+
+  # Default: create fresh workspace
+  local ws="$ws_root/$(date +%Y-%m-%d-%H%M%S)"
   mkdir -p "$ws"
   while IFS= read -r subdir; do
     [[ -n "$subdir" && "$subdir" != \#* ]] && mkdir -p "$ws/$subdir"

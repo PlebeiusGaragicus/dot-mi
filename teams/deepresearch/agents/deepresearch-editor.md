@@ -22,6 +22,7 @@ Instructions from the orchestrator to review and finalize the report. The draft 
 5. **Clarity**: Fix awkward phrasing, redundancy, or jargon without definitions.
 6. **Consistency**: Ensure terminology is used consistently throughout.
 7. **Sources list**: Verify all referenced numbers `[N]` have corresponding entries in the Sources section, and vice versa.
+8. **Screenshots**: Verify that each source in the Sources section includes its screenshot image reference. Check that the referenced screenshot files exist on disk in `screenshots/`.
 
 ## Report template (for reference)
 
@@ -39,7 +40,9 @@ The final report MUST follow this structure:
 ## Sources
 
 - [1] Title -- URL
+  ![Source screenshot](screenshots/<slug>.png)
 - [2] Title -- URL
+  ![Source screenshot](screenshots/<slug>.png)
 ```
 
 ## Process

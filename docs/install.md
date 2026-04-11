@@ -103,7 +103,7 @@ teams/<team-name>/
 ├── agents/              (empty -- add your agent .md files here)
 ├── prompts/             (empty -- add prompt templates here)
 ├── skills/              (individual skills symlinked from shared)
-│   ├── bowser -> ../../../shared/skills/bowser
+│   ├── playwright -> ../../../shared/skills/playwright
 │   ├── searxng -> ../../../shared/skills/searxng
 │   └── ...
 ├── themes/              (individual themes symlinked from shared)

@@ -123,7 +123,7 @@ The extension displays the welcome box on startup. Say "I'm ready" to begin the 
 Standalone agents inherit all shared skills by default. To remove one:
 
 ```bash
-rm agents/my-agent/skills/bowser
+rm agents/my-agent/skills/playwright
 ```
 
 ### Adding Agent-Specific Files

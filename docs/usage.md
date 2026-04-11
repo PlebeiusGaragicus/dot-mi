@@ -91,7 +91,50 @@ pi-blog
 
 This skips research and goes straight to write-review-revise.
 
-## 4. Ad-hoc Single Agent Use
+## 4. Deep Research (Workspace Team)
+
+Workspace teams launch in a fresh dated directory so artifacts stay isolated.
+
+```bash
+pi-deepresearch "What are the latest developments in WebTransport protocol?"
+```
+
+**What happens:** The alias creates `workspaces/deepresearch/<timestamp>/` with `sources/`, `drafts/`, and `subagent-sessions/` subdirectories, then launches pi inside it. The orchestrator runs a four-step pipeline:
+
+1. **scout** searches SearXNG for relevant sources
+2. **collector** (parallel, one per URL) fetches each page via headless browser, strips boilerplate, saves to `sources/`
+3. **writer** reads all sources and synthesizes a structured report to `drafts/report.md`
+4. **editor** reviews the draft against sources and produces `report.md`
+
+### Listing and resuming workspaces
+
+Each run creates a new workspace. To see past runs:
+
+```bash
+pi-deepresearch --list
+```
+
+```
+Workspaces for deepresearch:
+  2026-04-10-125602  (12 files)
+  2026-04-10-130214  (3 files)
+```
+
+To resume the most recent workspace session:
+
+```bash
+pi-deepresearch --resume
+```
+
+Or resume a specific one by prefix:
+
+```bash
+pi-deepresearch --resume 2026-04-10-125602
+```
+
+This cd's into the original workspace directory (so all files are present) and opens pi's session selector.
+
+## 5. Ad-hoc Single Agent Use
 
 You don't always need prompt templates. Just describe what you want:
 
@@ -108,7 +151,7 @@ pi-blog "Write a short post comparing our REST and GraphQL endpoints, keep it un
 
 The LLM sees the team's agents and decides whether to delegate via subagent or handle the task directly.
 
-## 5. Standalone Bots (No Teams)
+## 6. Standalone Bots (No Teams)
 
 For quick tasks that don't need team orchestration:
 
@@ -123,13 +166,16 @@ pexplain "How does the caching layer work?"
 
 These don't use `PI_CODING_AGENT_DIR` at all -- they pass flags directly to pi and use `~/.pi` as the config root.
 
-## 6. Create a Custom Team
+## 7. Create a Custom Team
 
 Say you want a team for writing documentation:
 
 ```bash
-# Scaffold the team directory
+# Scaffold the team directory (in-situ mode)
 ./setup.sh create docs-team
+
+# Or as a workspace team (creates workspace.conf)
+./setup.sh create --workspace docs-team
 ```
 
 This creates `teams/docs-team/` with extensions, skills, and models already symlinked. Now add agents:
@@ -157,23 +203,15 @@ EOF
 
 The `no-skills: true` + `skills: skills/searxng` combination means this agent loads only the searxng skill, ignoring any others in the team's `skills/` directory. Omit both fields to load all team skills, or set only `no-skills: true` to load none.
 
-Add an alias to `bash_aliases`:
-
-```bash
-pi-docs() {
-  PI_CODING_AGENT_DIR="$DOT_MI_DIR/teams/docs-team" pi "$@"
-}
-```
-
-Re-source and use it:
+Re-source aliases and use it -- the `pi-docs-team` alias is auto-generated from the directory name:
 
 ```bash
 source ~/dot-mi/bash_aliases
 cd ~/projects/my-api
-pi-docs "Write API reference docs for all endpoints in src/routes/"
+pi-docs-team "Write API reference docs for all endpoints in src/routes/"
 ```
 
-## 7. Sharing Auth Across Teams
+## 8. Sharing Auth Across Teams
 
 Each team has its own config root, including API authentication. After you authenticate in one team, share it with others:
 
@@ -187,7 +225,7 @@ pi-recon
 ./setup.sh link-auth recon blog
 ```
 
-## 8. Check Your Setup
+## 9. Check Your Setup
 
 See what teams are configured and whether their extensions are properly linked:
 
@@ -196,7 +234,12 @@ See what teams are configured and whether their extensions are properly linked:
 ```
 
 ```
-  blog   (3 agents, 2 prompts, extensions linked: yes)
-  impl   (2 agents, 1 prompts, extensions linked: yes)
-  recon  (2 agents, 1 prompts, extensions linked: yes)
+Teams:
+  blog  (in-situ, 3 agents, 2 prompts, extensions linked: yes)
+  deepresearch  (workspace, 4 agents, 0 prompts, extensions linked: yes)
+  impl  (in-situ, 2 agents, 1 prompts, extensions linked: yes)
+  recon  (in-situ, 2 agents, 1 prompts, extensions linked: yes)
+
+Standalone agents:
+  twenty-questions  (in-situ, extensions: 1)
 ```
