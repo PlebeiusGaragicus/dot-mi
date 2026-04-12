@@ -331,6 +331,7 @@ async function runSingleAgent(
 				cwd: cwd ?? defaultCwd,
 				shell: false,
 				stdio: ["ignore", "pipe", "pipe"],
+				env: { ...process.env, PI_IS_SUBAGENT: "1" },
 			});
 			let buffer = "";
 
@@ -465,7 +466,7 @@ export default function (pi: ExtensionAPI) {
 		/* ignore */
 	}
 
-	if (teamPrompt && process.stdout.isTTY) {
+	if (teamPrompt && !process.env.PI_IS_SUBAGENT) {
 		pi.on("before_agent_start", async (event) => {
 			return { systemPrompt: event.systemPrompt + "\n\n" + teamPrompt };
 		});

@@ -98,6 +98,12 @@ Up to 8 tasks, 4 concurrent.
 
 Sequential pipeline. `{previous}` is replaced with the prior step's output.
 
+## Team Prompt Injection
+
+If `<agentDir>/team-prompt.md` exists, the extension loads it at startup and registers a `before_agent_start` hook that appends its contents to the orchestrator's system prompt. This gives the parent pi process team-specific context -- available agents, workflows, and constraints.
+
+The injection is gated on the `PI_IS_SUBAGENT` environment variable. The extension sets `PI_IS_SUBAGENT=1` in the environment of every child pi process it spawns, so subagents never receive the team prompt. This works correctly for both interactive sessions and non-interactive runs (eval scripts, piped output).
+
 ## Agent Discovery
 
 Agents are discovered fresh on each tool invocation from two locations:

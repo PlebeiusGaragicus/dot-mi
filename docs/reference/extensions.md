@@ -305,7 +305,7 @@ Key patterns:
 
 - Multi-file extension using a directory with `index.ts` entry point and `agents.ts` helper
 - Full Typebox parameter schema with nested objects and enums
-- Spawns child pi processes via `node:child_process`
+- Spawns child pi processes via `node:child_process` with `PI_IS_SUBAGENT=1` in their env
 - Streams partial results via `onUpdate` callback
 - Complex `renderCall` and `renderResult` with collapsed/expanded views
-- Reads `team-prompt.md` via `before_agent_start` hook for orchestrator injection
+- Reads `team-prompt.md` via `before_agent_start` hook for orchestrator prompt injection (gated on `!process.env.PI_IS_SUBAGENT` so subagents don't receive it)

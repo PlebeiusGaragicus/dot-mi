@@ -30,6 +30,7 @@ pi-blog "Write a post about this project"
 | `pi-recon` | scout, planner | Codebase reconnaissance and planning |
 | `pi-impl` | worker, reviewer | Implementation and code review |
 | `pi-blog` | researcher, writer, editor | Blog post pipeline |
+| `pi-deepresearch` | scout, collector, writer, editor | Web research with sourced reports (workspace mode) |
 
 ## Create a Team
 

@@ -1,3 +1,4 @@
 [submodule "pi-mono"]
 	path = pi-mono
-	url = git@github.com:PlebeiusGaragicus/pi-mono.git
+	url = https://github.com/PlebeiusGaragicus/pi-mono.git
+	branch = main

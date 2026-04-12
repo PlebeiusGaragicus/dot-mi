@@ -99,7 +99,7 @@ Workspace teams launch in a fresh dated directory so artifacts stay isolated.
 pi-deepresearch "What are the latest developments in WebTransport protocol?"
 ```
 
-**What happens:** The alias creates `workspaces/deepresearch/<timestamp>/` with `sources/`, `screenshots/`, `drafts/`, and `sessions/` subdirectories, then launches pi inside it. Both the orchestrator and all subagent sessions are stored in `sessions/` for unified trajectory analysis. The orchestrator runs a four-step pipeline:
+**What happens:** The alias creates `workspaces/deepresearch/<timestamp>/` with `sources/`, `screenshots/`, `drafts/`, and `sessions/` subdirectories, then launches pi inside it. The orchestrator's tools are restricted to `read,find,ls,grep` via `pi.flags`, so it cannot curl or bash its way through -- it must delegate all work to subagents. Both the orchestrator and all subagent sessions are stored in `sessions/` for unified trajectory analysis. The orchestrator runs a four-step pipeline:
 
 1. **scout** searches SearXNG for relevant sources
 2. **collector** (parallel, one per URL) fetches each page via headless browser, strips boilerplate, saves to `sources/`
@@ -133,6 +133,20 @@ pi-deepresearch --resume 2026-04-10-125602
 ```
 
 This cd's into the original workspace directory (so all files are present) and opens pi's session selector.
+
+### Running evals
+
+The eval runner (`evals/run-eval.sh`) tests teams against scripted prompts in non-interactive mode. Both the team name and a prompts file are required:
+
+```bash
+# Quick smoke test
+./evals/run-eval.sh deepresearch evals/deepresearch-short.txt
+
+# Comprehensive suite
+./evals/run-eval.sh deepresearch evals/deepresearch-long.txt
+```
+
+Each prompt runs in its own workspace. Results are organized by eval name (derived from the prompts filename) at `evals/results/<team>/<eval-name>/<timestamp>/` with per-prompt output files and a JSONL manifest for trajectory analysis.
 
 ## 5. Ad-hoc Single Agent Use
 

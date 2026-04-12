@@ -69,9 +69,10 @@ You should see:
 
 ```
 Teams:
-  blog   (3 agents, 2 prompts, extensions linked: yes)
-  impl   (2 agents, 1 prompts, extensions linked: yes)
-  recon  (2 agents, 1 prompts, extensions linked: yes)
+  blog           (3 agents, 2 prompts, extensions linked: yes)
+  deepresearch   (4 agents, 0 prompts, extensions linked: yes)
+  impl           (2 agents, 1 prompts, extensions linked: yes)
+  recon          (2 agents, 1 prompts, extensions linked: yes)
 
 Standalone agents:
   twenty-questions  (extensions: 1)
@@ -102,6 +103,8 @@ teams/<team-name>/
 │   └── startup-branding.ts -> ../../../shared/extensions/startup-branding.ts
 ├── agents/              (empty -- add your agent .md files here)
 ├── prompts/             (empty -- add prompt templates here)
+├── team-prompt.md       (optional -- orchestrator system prompt, see Architecture)
+├── pi.flags             (optional -- default CLI flags, e.g. --tools read,find,ls,grep)
 ├── skills/              (individual skills symlinked from shared)
 │   ├── playwright -> ../../../shared/skills/playwright
 │   ├── searxng -> ../../../shared/skills/searxng
@@ -116,6 +119,12 @@ teams/<team-name>/
 ```
 
 The `extensions/`, `models.json`, and `bin/` are symlinks to `shared/`. Skills and themes are symlinked individually -- remove a symlink to exclude a skill or theme from a team. The `bin/` symlink means pi downloads `fd` and `rg` once into `shared/bin/` and all teams share them. `settings.json` is scaffolded with default theme and quiet startup preferences. Agents and prompts are per-team. Individual agents can further restrict skills via frontmatter (`skills`, `no-skills`).
+
+**Optional files:**
+
+- `team-prompt.md` -- If present, the subagent-teams extension appends this to the orchestrator's system prompt. Use it to give the parent agent team-specific context (available agents, workflows, constraints).
+- `pi.flags` -- If present, `bash_aliases` reads default CLI flags from this file and applies them before any user-provided flags. One flag per line. Use it to restrict the orchestrator's tools (e.g. `--tools read,find,ls,grep` to force subagent delegation).
+- `workspace.conf` -- If present, the alias launches in workspace mode: creates a dated directory, pre-creates subdirectories listed in the file, and runs pi inside it.
 
 Example:
 

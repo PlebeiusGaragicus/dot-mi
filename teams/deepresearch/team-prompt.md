@@ -84,6 +84,10 @@ After the editor finishes, read `report.md` and present it to the user. Include:
 2. A brief summary of the research process (how many sources found, fetched, and cited)
 3. Any gaps or issues noted by the agents
 
+## Constraints
+
+You have NO direct access to bash, write, edit, or any web-fetching tools. You cannot curl, wget, or browse the web yourself. Your only way to accomplish work is by delegating to your subagents via the `subagent` tool. You can read files (to check deliverables like `report.md`) and list directories (to verify workspace state), but all research, content creation, and editing must go through the pipeline above.
+
 ## Important
 
 - Each subagent runs in an isolated process. You only see their final text output.

@@ -5,11 +5,11 @@
 # JSONL manifest for later trajectory analysis.
 #
 # Usage:
-#   ./evals/run-eval.sh <team> [prompts-file]
+#   ./evals/run-eval.sh <team> <prompts-file>
 #
 # Examples:
-#   ./evals/run-eval.sh deepresearch
-#   ./evals/run-eval.sh deepresearch evals/custom-prompts.txt
+#   ./evals/run-eval.sh deepresearch evals/deepresearch-short.txt
+#   ./evals/run-eval.sh deepresearch evals/deepresearch-long.txt
 
 set -euo pipefail
 
@@ -18,8 +18,8 @@ DOT_MI_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 
 source "$DOT_MI_DIR/bash_aliases"
 
-TEAM="${1:?Usage: $0 <team> [prompts-file]}"
-PROMPTS_FILE="${2:-$SCRIPT_DIR/$TEAM.txt}"
+TEAM="${1:?Usage: $0 <team> <prompts-file>}"
+PROMPTS_FILE="${2:?Usage: $0 <team> <prompts-file>}"
 
 if [ ! -f "$PROMPTS_FILE" ]; then
   echo "Error: prompts file not found: $PROMPTS_FILE" >&2
@@ -31,13 +31,15 @@ if ! command -v jq &>/dev/null; then
   exit 1
 fi
 
+EVAL_NAME="$(basename "$PROMPTS_FILE" .txt)"
 EVAL_ID="$(date +%Y-%m-%d-%H%M%S)"
-RESULTS_DIR="$SCRIPT_DIR/results/$TEAM/$EVAL_ID"
+RESULTS_DIR="$SCRIPT_DIR/results/$TEAM/$EVAL_NAME/$EVAL_ID"
 WS_ROOT="$DOT_MI_DIR/workspaces/$TEAM"
 mkdir -p "$RESULTS_DIR"
 
 echo "=== Eval Run: $EVAL_ID ==="
 echo "Team:    $TEAM"
+echo "Eval:    $EVAL_NAME"
 echo "Prompts: $PROMPTS_FILE"
 echo "Results: $RESULTS_DIR"
 echo ""
@@ -58,7 +60,7 @@ while IFS= read -r prompt || [ -n "$prompt" ]; do
 
   start=$(date +%s)
   exit_code=0
-  "pi-$TEAM" -p "$prompt" \
+  "pi-$TEAM" -p "$prompt" < /dev/null \
     > "$RESULTS_DIR/prompt-${prompt_num}-output.txt" 2>&1 \
     || exit_code=$?
   duration=$(( $(date +%s) - start ))
