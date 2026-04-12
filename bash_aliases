@@ -27,7 +27,7 @@ _dotmi_read_flags() {
   local flags_file="$1/pi.flags"
   [ -f "$flags_file" ] || return 0
   # zsh doesn't word-split unquoted vars by default; enable it locally
-  [ -n "$ZSH_VERSION" ] && setopt local_options shwordsplit
+  [ -n "${ZSH_VERSION:-}" ] && setopt local_options shwordsplit
   while IFS= read -r line || [ -n "$line" ]; do
     [[ -n "$line" && "$line" != \#* ]] && _DOTMI_FLAGS+=($line)
   done < "$flags_file"
