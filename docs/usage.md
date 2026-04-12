@@ -99,7 +99,7 @@ Workspace teams launch in a fresh dated directory so artifacts stay isolated.
 pi-deepresearch "What are the latest developments in WebTransport protocol?"
 ```
 
-**What happens:** The alias creates `workspaces/deepresearch/<timestamp>/` with `sources/`, `drafts/`, and `subagent-sessions/` subdirectories, then launches pi inside it. The orchestrator runs a four-step pipeline:
+**What happens:** The alias creates `workspaces/deepresearch/<timestamp>/` with `sources/`, `screenshots/`, `drafts/`, and `sessions/` subdirectories, then launches pi inside it. Both the orchestrator and all subagent sessions are stored in `sessions/` for unified trajectory analysis. The orchestrator runs a four-step pipeline:
 
 1. **scout** searches SearXNG for relevant sources
 2. **collector** (parallel, one per URL) fetches each page via headless browser, strips boilerplate, saves to `sources/`

@@ -66,7 +66,9 @@ _dotmi_workspace_launch() {
       fi
     fi
     echo "Resuming: $target"
-    (cd "$target" && PI_CODING_AGENT_DIR="$config_dir" pi --resume "$@")
+    local _resume_args=()
+    [ -d "$target/sessions" ] && _resume_args+=(--session-dir "$target/sessions")
+    (cd "$target" && PI_CODING_AGENT_DIR="$config_dir" pi "${_resume_args[@]}" --resume "$@")
     return
   fi
 
@@ -77,7 +79,9 @@ _dotmi_workspace_launch() {
     [[ -n "$subdir" && "$subdir" != \#* ]] && mkdir -p "$ws/$subdir"
   done < "$config_dir/workspace.conf"
   echo "Workspace: $ws"
-  (cd "$ws" && PI_CODING_AGENT_DIR="$config_dir" pi "$@")
+  local _launch_args=()
+  [ -d "$ws/sessions" ] && _launch_args+=(--session-dir "$ws/sessions")
+  (cd "$ws" && PI_CODING_AGENT_DIR="$config_dir" pi "${_launch_args[@]}" "$@")
 }
 
 # ── auto-generated aliases ──────────────────────────────────────────────────

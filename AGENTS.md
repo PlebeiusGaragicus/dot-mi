@@ -222,7 +222,7 @@ Any team or standalone agent can run as a **workspace agent** by adding a `works
 # teams/deepresearch/workspace.conf
 sources
 drafts
-subagent-sessions
+sessions
 ```
 
 **To convert any existing team/agent to workspace mode**: create `workspace.conf` in its directory (can be empty for a bare workspace, or list subdirectories).
@@ -241,7 +241,7 @@ pi-deepresearch --resume 2026-04-10         # resume workspace matching prefix
 ```
 `--resume` cd's into the existing workspace directory and passes `--resume` to pi, so the session selector opens with the original session available. `--list` shows each workspace with a file count.
 
-**Subagent session logging**: When `subagent-sessions/` exists in the working directory, the `subagent-teams` extension automatically uses `--session-dir` instead of `--no-session`, enabling retrospective analysis of subagent runs.
+**Unified session logging**: When a workspace has a `sessions/` directory, both the orchestrator and all subagent sessions are stored there. The workspace launcher passes `--session-dir` to pi, and the `subagent-teams` extension detects the same directory for subagent sessions. This puts the complete run trajectory in one place for retrospective analysis. Legacy `subagent-sessions/` directories are also supported as a fallback.
 
 Workspace contents are gitignored (`workspaces/*/`).
 

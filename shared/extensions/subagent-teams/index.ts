@@ -269,10 +269,11 @@ async function runSingleAgent(
 	}
 
 	const effectiveCwd = cwd ?? defaultCwd;
-	const sessionDir = path.join(effectiveCwd, "subagent-sessions");
-	const useSessionDir = fs.existsSync(sessionDir);
+	const sessionsDir = path.join(effectiveCwd, "sessions");
+	const legacySessionsDir = path.join(effectiveCwd, "subagent-sessions");
+	const sessionDir = fs.existsSync(sessionsDir) ? sessionsDir : fs.existsSync(legacySessionsDir) ? legacySessionsDir : null;
 	const args: string[] = ["--mode", "json", "-p"];
-	if (useSessionDir) {
+	if (sessionDir) {
 		args.push("--session-dir", sessionDir);
 	} else {
 		args.push("--no-session");

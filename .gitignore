@@ -1,5 +1,6 @@
 .DS_Store
 .env
+example-reports/
 
 # Runtime session data (each team gets its own sessions/ dir)
 teams/*/sessions/*
@@ -18,6 +19,9 @@ agents/*/sessions/*
 agents/*/auth.json
 agents/*/settings.json
 agents/*/.cache/
+
+# Eval results (generated per-run, can be large)
+evals/results/
 
 # Workspace team output (research artifacts are ephemeral)
 workspaces/*/

@@ -26,7 +26,7 @@ Dispatch the scout with the user's research topic. It will search and return a l
 subagent tool call:
   team: "deepresearch"
   agent: "scout"
-  prompt: "Research topic: <user's topic>"
+  task: "Research topic: <user's topic>"
 ```
 
 ### Step 2: Collector (parallel)
@@ -38,9 +38,9 @@ subagent tool call:
   team: "deepresearch"
   tasks:
     - agent: "collector"
-      prompt: "Collector #1: Fetch and clean this source:\n- URL: <url>\n- Title: <title>\n- Relevance: <note>"
+      task: "Collector #1: Fetch and clean this source:\n- URL: <url>\n- Title: <title>\n- Relevance: <note>"
     - agent: "collector"
-      prompt: "Collector #2: Fetch and clean this source:\n- URL: <url>\n- Title: <title>\n- Relevance: <note>"
+      task: "Collector #2: Fetch and clean this source:\n- URL: <url>\n- Title: <title>\n- Relevance: <note>"
     ... (one per URL, incrementing the collector number)
 ```
 
@@ -52,7 +52,7 @@ After all collectors finish, dispatch the writer to synthesize the sources into 
 subagent tool call:
   team: "deepresearch"
   agent: "writer"
-  prompt: "Write a research report on: <topic>. Read all source files in sources/ and synthesize into drafts/report.md."
+  task: "Write a research report on: <topic>. Read all source files in sources/ and synthesize into drafts/report.md."
 ```
 
 ### Step 4: Editor (single)
@@ -63,7 +63,7 @@ Dispatch the editor to review the draft and produce the final report.
 subagent tool call:
   team: "deepresearch"
   agent: "editor"
-  prompt: "Review drafts/report.md against source files in sources/. Produce final report at report.md."
+  task: "Review drafts/report.md against source files in sources/. Produce final report at report.md."
 ```
 
 ## Workspace conventions
@@ -73,7 +73,7 @@ This team operates in a dated workspace directory. The launch alias pre-creates 
 - `sources/` -- Cleaned source files saved by collector agents (markdown with YAML frontmatter)
 - `screenshots/` -- Page screenshots taken by collector agents (PNG files)
 - `drafts/` -- Intermediate report drafts from the writer
-- `subagent-sessions/` -- Session logs from each subagent run (auto-populated by the subagent-teams extension)
+- `sessions/` -- Session logs from the orchestrator and all subagent runs (auto-populated)
 
 The final deliverable is `report.md` at the workspace root.
 
