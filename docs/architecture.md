@@ -23,47 +23,38 @@ This is the mechanism dot-mi exploits for both team isolation and standalone age
 ```
 dot-mi/
 ├── setup.sh                  # Team and agent bootstrapping script
-├── bash_aliases              # Shell aliases (source in .zshrc/.bashrc)
+├── bash_aliases              # Shell functions (source in .zshrc/.bashrc)
 ├── example.env               # API key template
 ├── AGENTS.md                 # LLM-readable project guide
 ├── shared/                   # Reusable resources (never loaded directly)
-│   ├── extensions/
-│   │   ├── subagent-teams/   # Team-aware subagent extension
-│   │   ├── run-finish-notify.ts
-│   │   └── startup-branding.ts  # Renders banner.txt as startup header
-│   ├── skills/               # Shared skill definitions
-│   │   ├── playwright/
-│   │   ├── nak/
-│   │   └── searxng/
-│   ├── themes/               # Shared themes
-│   │   └── synthwave.json
+│   ├── extensions/           # Shared extension source code
+│   ├── skills/               # Shared skill definitions (SKILL.md files)
+│   ├── themes/               # Shared themes (JSON)
 │   ├── bin/                  # Downloaded binaries (fd, rg) -- gitignored contents
 │   └── models.json           # Custom model provider config
-├── teams/                    # Multi-agent team directories
-│   ├── recon/
-│   │   ├── extensions/       # ← symlinks to shared/extensions/
-│   │   ├── agents/           # recon-scout.md, recon-planner.md
-│   │   ├── prompts/          # implement.md
-│   │   ├── skills/           # ← individual symlinks to shared/skills/*/
-│   │   ├── themes/           # ← individual symlinks to shared/themes/*
-│   │   ├── team-prompt.md    # orchestrator config + system prompt (frontmatter: tools, model)
-│   │   ├── banner.txt        # startup branding (ASCII art + usage)
-│   │   ├── bin/              # ← symlink to shared/bin/
-│   │   ├── sessions/         # runtime (gitignored)
-│   │   ├── settings.json     # theme, quietStartup (gitignored)
-│   │   └── models.json       # ← symlink to shared/models.json
-│   ├── deepresearch/
-│   │   ├── ...               # same structure as above
-│   │   └── workspace.conf    # triggers workspace mode (dated directories)
-│   ├── impl/
-│   └── blog/
-├── agents/                   # Standalone agent directories
-│   └── twenty-questions/
-│       ├── extensions/       # Custom extension (not subagent-teams)
-│       ├── themes/           # ← symlinks to shared/themes/*
-│       ├── banner.txt        # startup branding (ASCII art + usage)
-│       ├── sessions/         # runtime (gitignored)
-│       └── settings.json     # theme, quietStartup (gitignored)
+├── teams/                    # Multi-agent team directories (one per team)
+│   └── <name>/               # Each is a complete PI_CODING_AGENT_DIR root
+│       ├── extensions/       # ← symlinks to shared/extensions/
+│       ├── agents/           # Subagent definitions (<name>-agentname.md)
+│       ├── prompts/          # Prompt templates (slash-command workflows)
+│       ├── skills/           # ← individual symlinks to shared/skills/
+│       ├── themes/           # ← individual symlinks to shared/themes/
+│       ├── team-prompt.md    # Orchestrator config (frontmatter) + system prompt (body)
+│       ├── banner.txt        # Startup branding (ASCII art + usage)
+│       ├── workspace.conf    # (optional) Triggers workspace mode (dated directories)
+│       ├── bin/              # ← symlink to shared/bin/
+│       ├── sessions/         # Runtime (gitignored)
+│       ├── settings.json     # Theme, quietStartup (gitignored)
+│       └── models.json       # ← symlink to shared/models.json
+├── agents/                   # Standalone agent directories (one per agent)
+│   └── <name>/               # Each is a complete PI_CODING_AGENT_DIR root
+│       ├── extensions/       # Custom extension (+ shared symlinks)
+│       ├── skills/           # ← individual symlinks to shared/skills/
+│       ├── themes/           # ← individual symlinks to shared/themes/
+│       ├── banner.txt        # Startup branding (ASCII art + usage)
+│       ├── bin/              # ← symlink to shared/bin/
+│       ├── sessions/         # Runtime (gitignored)
+│       └── models.json       # ← symlink to shared/models.json
 ├── docs/                     # This documentation (MkDocs)
 └── pi-mono/                  # Read-only reference submodule
 ```
@@ -165,9 +156,9 @@ Agents are markdown files with YAML frontmatter. They're discovered from `<agent
 
 | Mode | Input | Behavior |
 |------|-------|----------|
-| **Single** | `{ agent, task, team? }` | One agent runs one task |
-| **Parallel** | `{ tasks: [...], team? }` | Up to 8 tasks, 4 concurrent |
-| **Chain** | `{ chain: [...], team? }` | Sequential pipeline; `{previous}` passes output forward |
+| **Single** | `{ agent, task }` | One agent runs one task |
+| **Parallel** | `{ tasks: [...] }` | Up to 8 tasks, 4 concurrent |
+| **Chain** | `{ chain: [...] }` | Sequential pipeline; `{previous}` passes output forward |
 
 ### Prompt Templates
 

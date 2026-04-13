@@ -67,7 +67,7 @@ A `team` field in frontmatter overrides the filename-derived team.
 ### Single
 
 ```json
-{ "agent": "scout", "task": "Find all auth code", "team": "recon" }
+{ "agent": "scout", "task": "Find all auth code" }
 ```
 
 ### Parallel
@@ -77,8 +77,7 @@ A `team` field in frontmatter overrides the filename-derived team.
   "tasks": [
     { "agent": "scout", "task": "Find auth code" },
     { "agent": "planner", "task": "Review architecture" }
-  ],
-  "team": "recon"
+  ]
 }
 ```
 
@@ -90,8 +89,7 @@ Up to 8 tasks, 4 concurrent.
 {
   "chain": [
     { "agent": "scout", "task": "Find code related to auth" },
-    { "agent": "planner", "task": "Plan changes based on: {previous}" },
-    { "agent": "worker", "task": "Implement the plan: {previous}" }
+    { "agent": "planner", "task": "Plan changes based on: {previous}" }
   ]
 }
 ```

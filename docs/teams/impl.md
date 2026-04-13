@@ -8,8 +8,7 @@ Code implementation and review.
 
 | Field | Value |
 |-------|-------|
-| Model | `claude-sonnet-4-5` |
-| Tools | all defaults (read, bash, edit, write, ...) |
+| Tools | all defaults |
 
 General-purpose agent with full capabilities. Works autonomously in an isolated context to complete delegated tasks. Reports what was done, which files changed, and any notes for followup.
 
@@ -17,7 +16,6 @@ General-purpose agent with full capabilities. Works autonomously in an isolated 
 
 | Field | Value |
 |-------|-------|
-| Model | `claude-sonnet-4-5` |
 | Tools | read, grep, find, ls, bash |
 
 Senior code reviewer. Analyzes code for quality, security, and maintainability. Uses bash only for read-only git commands (`git diff`, `git log`). Reports critical issues, warnings, and suggestions with exact file paths and line numbers.
@@ -26,7 +24,7 @@ Senior code reviewer. Analyzes code for quality, security, and maintainability. 
 
 ### `/implement-and-review`
 
-Iterative implementation workflow within the impl team:
+Iterative implementation workflow:
 
 1. **worker** implements the requested changes
 2. **reviewer** reviews the implementation

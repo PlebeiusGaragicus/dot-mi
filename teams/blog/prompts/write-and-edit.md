@@ -1,7 +1,7 @@
 ---
-description: Writer drafts, editor reviews, writer applies feedback (blog team)
+description: Writer drafts, editor reviews, writer applies feedback
 ---
-Use the subagent tool with team: "blog" and the chain parameter to execute this workflow:
+Use the subagent tool with the chain parameter to execute this workflow:
 
 1. First, use the "writer" agent to draft a blog post about: $@
 2. Then, use the "editor" agent to review the draft from the previous step (use {previous} placeholder)

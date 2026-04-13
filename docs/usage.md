@@ -27,18 +27,17 @@ pi-recon "Map the authentication flow -- which files handle login, session manag
 
 ### Using the `/implement` prompt template
 
-If you want the full scout-plan-implement chain in one shot:
+If you want the scout-plan chain in one shot:
 
 ```bash
 pi-recon
 > /implement add rate limiting to the /api/login endpoint
 ```
 
-This triggers a three-step chain:
+This triggers a two-step chain:
 
-1. **scout** (recon) finds all code relevant to the login endpoint
-2. **planner** (recon) creates a numbered implementation plan from the scout's findings
-3. **worker** (impl) executes the plan
+1. **scout** finds all code relevant to the login endpoint
+2. **planner** creates a numbered implementation plan from the scout's findings
 
 Each step runs in its own isolated pi process. The output of each step flows into the next via the `{previous}` placeholder.
 

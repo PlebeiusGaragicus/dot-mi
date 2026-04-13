@@ -2,7 +2,7 @@
 
 Custom [pi](https://github.com/PlebeiusGaragicus/pi-mono) agent teams as dotfiles.
 
-Manage multiple pi coding agent configurations without touching `~/.pi/`. Each team gets its own isolated directory with agents, prompts, extensions, and session history. A bash alias sets `PI_CODING_AGENT_DIR` and you're running a fully isolated agent team from any working directory.
+Manage multiple pi coding agent configurations without touching `~/.pi/`. Each team or standalone agent gets its own isolated directory with extensions, agents, prompts, skills, and session history. A shell function sets `PI_CODING_AGENT_DIR` and you're running a fully isolated agent from any working directory.
 
 ## Quick Start
 
@@ -10,28 +10,12 @@ Manage multiple pi coding agent configurations without touching `~/.pi/`. Each t
 git clone git@github.com:PlebeiusGaragicus/dot-mi.git ~/dot-mi
 cd ~/dot-mi && git submodule update --init
 
-# Set up API keys
 cp example.env .env
-# Edit .env with your keys
+# Edit .env with your API keys
 
-# Source aliases
 echo 'source ~/dot-mi/bash_aliases' >> ~/.zshrc
 source ~/dot-mi/bash_aliases
-
-# Use a team
-pi-recon "Find all authentication code"
-pi-blog "Write a post about this project"
 ```
-
-## Teams
-
-| Alias | Agents | Purpose |
-|-------|--------|---------|
-| `pi-recon` | scout, planner | Codebase reconnaissance and planning |
-| `pi-impl` | worker, reviewer | Implementation and code review |
-| `pi-blog` | researcher, writer, editor | Blog post pipeline |
-| `pi-deepresearch` | scout, collector, writer, editor | Web research with sourced reports (workspace mode) |
-| `pi-retro` | scanner, reviewer | Retrospective trajectory analysis of agent runs |
 
 ## Create a Team
 
@@ -41,8 +25,6 @@ pi-blog "Write a post about this project"
 # Add prompts to teams/my-team/prompts/
 ```
 
-## How It Works
+## Docs
 
-Pi's `getAgentDir()` checks `PI_CODING_AGENT_DIR` before falling back to `~/.pi/agent/`. Each team alias sets this env var to a self-contained directory under `teams/`, giving full isolation of extensions, agents, prompts, sessions, and settings.
-
-See the [docs](https://PlebeiusGaragicus.github.io/dot-mi/) for full architecture details.
+See the [documentation site](https://PlebeiusGaragicus.github.io/dot-mi/) for architecture, usage, extension API, and per-team details.

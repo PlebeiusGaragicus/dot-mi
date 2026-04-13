@@ -97,11 +97,13 @@ SETTINGS
     echo "Warning: figlet not installed -- skipping banner.txt (brew install figlet)"
   fi
 
-  # Scaffold default team-prompt.md with name/description frontmatter
+  # Scaffold default team-prompt.md with name/description/tools/model frontmatter
   cat > "$team_dir/team-prompt.md" <<TEAMPROMPT
 ---
 name: $(echo "$team_name" | sed 's/./\U&/')
 description: $team_name agent team.
+# tools: read, grep, find, ls
+# model: plebchat/qwen/qwen3-coder-next
 ---
 
 # $team_name Team

@@ -8,8 +8,8 @@ Blog post research, writing, and editing.
 
 | Field | Value |
 |-------|-------|
-| Model | `claude-haiku-4-5` |
 | Tools | read, grep, find, ls, bash |
+| Skills | searxng, playwright |
 
 Gathers comprehensive background material on a topic -- key facts, code examples, sources, and angle suggestions -- so the writer can produce a well-informed post.
 
@@ -17,8 +17,8 @@ Gathers comprehensive background material on a topic -- key facts, code examples
 
 | Field | Value |
 |-------|-------|
-| Model | `claude-sonnet-4-5` |
 | Tools | all defaults |
+| Skills | none (`no-skills: true`) |
 
 Drafts blog posts from research material. Produces conversational but authoritative prose with clear structure, concrete examples, and scannable sections. Targets 800-1500 words by default.
 
@@ -26,8 +26,8 @@ Drafts blog posts from research material. Produces conversational but authoritat
 
 | Field | Value |
 |-------|-------|
-| Model | `claude-sonnet-4-5` |
 | Tools | read, grep, find, ls |
+| Skills | none (`no-skills: true`) |
 
 Reviews drafts for accuracy, structure, clarity, engagement, completeness, and length. Can verify code snippets against the actual codebase. Returns a verdict, required changes, and optionally a revised draft.
 

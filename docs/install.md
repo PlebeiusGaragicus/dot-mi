@@ -47,7 +47,7 @@ Then reload your shell:
 source ~/.zshrc  # or source ~/.bashrc
 ```
 
-This gives you the team aliases (`pi-recon`, `pi-impl`, `pi-blog`), auto-generated standalone agent aliases (e.g. `pi-twenty-questions`), and the standalone bots (`pchat`, `pexplain`).
+This gives you auto-generated `pi-<name>` functions for each team and standalone agent, plus the standalone bots (`pchat`, `pexplain`).
 
 `DOT_MI_DIR` is auto-detected from the script's location, so the repo can live anywhere. If you need to override it for some reason, set `DOT_MI_DIR` before sourcing:
 
@@ -65,18 +65,7 @@ cd ~/dot-mi
 ./setup.sh list
 ```
 
-You should see:
-
-```
-Teams:
-  blog           (3 agents, 2 prompts, extensions linked: yes)
-  deepresearch   (4 agents, 0 prompts, extensions linked: yes)
-  impl           (2 agents, 1 prompts, extensions linked: yes)
-  recon          (2 agents, 1 prompts, extensions linked: yes)
-
-Standalone agents:
-  twenty-questions  (extensions: 1)
-```
+You should see each team with its agent/prompt counts and extension link status, followed by any standalone agents.
 
 Test a team:
 
@@ -186,13 +175,7 @@ Shows all teams and standalone agents with their counts and status:
 ./setup.sh list
 ```
 
-```
-  blog   (3 agents, 2 prompts, extensions linked: yes)
-  impl   (2 agents, 1 prompts, extensions linked: yes)
-  recon  (2 agents, 1 prompts, extensions linked: yes)
-```
-
-If `extensions linked` shows `no`, the symlinks are broken -- re-run `create` or manually fix them.
+If `extensions linked` shows `no` for any team, the symlinks are broken -- re-run `create` or manually fix them.
 
 ### `./setup.sh link-auth <source> <destination>`
 

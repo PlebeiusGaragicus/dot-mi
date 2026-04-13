@@ -8,7 +8,6 @@ Fast codebase reconnaissance and implementation planning.
 
 | Field | Value |
 |-------|-------|
-| Model | `claude-haiku-4-5` |
 | Tools | read, grep, find, ls, bash |
 
 Quickly investigates a codebase and returns structured findings (file locations, key code, architecture notes) that another agent can use without re-reading everything. Adjusts thoroughness based on the task.
@@ -17,7 +16,6 @@ Quickly investigates a codebase and returns structured findings (file locations,
 
 | Field | Value |
 |-------|-------|
-| Model | `claude-sonnet-4-5` |
 | Tools | read, grep, find, ls |
 
 Takes context from a scout and produces a concrete, numbered implementation plan. Read-only -- does not make changes.
@@ -26,11 +24,10 @@ Takes context from a scout and produces a concrete, numbered implementation plan
 
 ### `/implement`
 
-Full implementation workflow that chains across teams:
+Full implementation workflow:
 
-1. **scout** (recon) gathers relevant code
-2. **planner** (recon) creates an implementation plan
-3. **worker** (impl) executes the plan
+1. **scout** gathers relevant code
+2. **planner** creates an implementation plan
 
 ```
 /implement add Redis caching to the session store

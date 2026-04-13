@@ -21,31 +21,20 @@ dot-mi/
 ├── AGENTS.md                 # This file
 ├── README.md                 # Human-facing overview
 ├── setup.sh                  # Scaffold teams and agents
-├── bash_aliases              # Shell aliases (source in .zshrc/.bashrc)
+├── bash_aliases              # Shell functions (source in .zshrc/.bashrc)
 ├── example.env               # API key template (copy to .env)
 ├── mkdocs.yml                # MkDocs config for docs site
 │
 ├── shared/                   # Reusable resources (never used as PI_CODING_AGENT_DIR directly)
-│   ├── extensions/
-│   │   ├── subagent-teams/   # Team-aware subagent extension (index.ts + agents.ts)
-│   │   ├── run-finish-notify.ts  # Desktop notification on agent completion
-│   │   └── startup-branding.ts   # Renders banner.txt as startup header
-│   ├── skills/               # Shared skill definitions (SKILL.md files)
+│   ├── extensions/           # Shared extension source code (*.ts files and directories)
+│   ├── skills/               # Shared skill definitions (each skill is a directory with SKILL.md)
 │   ├── themes/               # Shared themes (JSON)
 │   ├── bin/                  # Downloaded binaries (fd, rg) — gitignored contents
 │   └── models.json           # Custom model provider config
 │
 ├── teams/                    # Multi-agent team directories
-│   ├── recon/                # Reconnaissance & planning (scout, planner)
-│   ├── impl/                 # Implementation & review (worker, reviewer)
-│   ├── blog/                 # Blog content (researcher, writer, editor)
-│   └── deepresearch/         # Web research (scout, collector, writer, editor)
-│
 ├── agents/                   # Standalone agent directories
-│   └── twenty-questions/     # Example: 20 questions game with TUI overlay
-│
 ├── workspaces/               # Ephemeral workspace directories (gitignored contents)
-│   └── deepresearch/         # Dated subdirs created per-run
 ├── docs/                     # MkDocs documentation source
 └── pi-mono/                  # Read-only git submodule of upstream pi
 ```
@@ -56,14 +45,11 @@ Each is a complete `PI_CODING_AGENT_DIR` root:
 
 ```
 teams/<name>/
-├── extensions/               # Symlinked from shared/extensions/
-│   ├── subagent-teams/       # → shared/extensions/subagent-teams/
-│   ├── run-finish-notify.ts  # → shared/extensions/run-finish-notify.ts
-│   └── startup-branding.ts   # → shared/extensions/startup-branding.ts
+├── extensions/               # Symlinked from shared/extensions/ (see Symlink Patterns)
 ├── agents/                   # Subagent definitions (team-agentname.md)
 ├── prompts/                  # Prompt templates (slash-command workflows)
-├── skills/                   # Symlinked from shared/skills/ (per-skill)
-├── themes/                   # Symlinked from shared/themes/
+├── skills/                   # Per-skill symlinks from shared/skills/
+├── themes/                   # Per-theme symlinks from shared/themes/
 ├── team-prompt.md            # Orchestrator config (frontmatter) + system prompt (body)
 ├── banner.txt                # Startup branding (ASCII art + usage text)
 ├── workspace.conf            # (optional) Marks as workspace agent; lists subdirs to pre-create
@@ -82,10 +68,9 @@ Same `PI_CODING_AGENT_DIR` root but without subagent orchestration:
 agents/<name>/
 ├── extensions/
 │   ├── <name>/               # Custom extension (index.ts)
-│   ├── run-finish-notify.ts  # → shared/extensions/run-finish-notify.ts
-│   └── startup-branding.ts   # → shared/extensions/startup-branding.ts
-├── skills/                   # Symlinked from shared/skills/
-├── themes/                   # Symlinked from shared/themes/
+│   └── ...                   # Shared extensions symlinked from shared/extensions/
+├── skills/                   # Per-skill symlinks from shared/skills/
+├── themes/                   # Per-theme symlinks from shared/themes/
 ├── banner.txt                # Startup branding (ASCII art + usage text)
 ├── workspace.conf            # (optional) Marks as workspace agent; lists subdirs to pre-create
 ├── bin/                      # → shared/bin/
@@ -255,19 +240,19 @@ Per-team orchestrator instructions, read by `subagent-teams` on startup and appe
 
 ## Symlink Patterns
 
-`setup.sh` wires shared resources into team/agent directories via relative symlinks:
+`setup.sh` wires shared resources into team/agent directories via relative symlinks. The canonical sources live in `shared/` and are never loaded directly by pi.
 
-| Resource | Team symlink | Agent symlink |
-|----------|-------------|---------------|
-| `subagent-teams` extension | `extensions/subagent-teams → ../../../shared/extensions/subagent-teams` | *(not linked)* |
-| `run-finish-notify.ts` | `extensions/run-finish-notify.ts → ../../../shared/extensions/run-finish-notify.ts` | same |
-| `startup-branding.ts` | `extensions/startup-branding.ts → ../../../shared/extensions/startup-branding.ts` | same |
-| Individual skills | `skills/<name> → ../../../shared/skills/<name>` | same |
-| Individual themes | `themes/<name>.json → ../../../shared/themes/<name>.json` | same |
-| bin directory | `bin → ../../shared/bin` | same |
-| models.json | `models.json → ../../shared/models.json` | same |
+**How it works:**
 
-**Do not edit symlink targets** — edit the source in `shared/` instead. To exclude a skill from a team/agent, remove its symlink.
+- **Extensions**: `setup.sh create` symlinks a standard set of shared extensions into `<teamDir>/extensions/`. Teams get the `subagent-teams` directory extension plus individual file extensions; standalone agents get only the file extensions. Additional extensions from `shared/extensions/` can be manually symlinked as needed.
+- **Skills**: Each skill directory in `shared/skills/` is symlinked individually into `<dir>/skills/`. Remove a symlink to exclude a skill from a team/agent.
+- **Themes**: Each theme JSON in `shared/themes/` is symlinked individually into `<dir>/themes/`.
+- **bin**: A single directory symlink (`bin → ../../shared/bin`) so pi downloads `fd`/`rg` once and all teams share them.
+- **models.json**: A single file symlink (`models.json → ../../shared/models.json`).
+
+All symlinks use relative paths (e.g. `../../../shared/extensions/...` for extensions under `teams/<name>/extensions/`).
+
+**Do not edit symlink targets** — edit the source in `shared/` instead.
 
 ## Common Tasks
 
