@@ -31,6 +31,7 @@ pi-blog "Write a post about this project"
 | `pi-impl` | worker, reviewer | Implementation and code review |
 | `pi-blog` | researcher, writer, editor | Blog post pipeline |
 | `pi-deepresearch` | scout, collector, writer, editor | Web research with sourced reports (workspace mode) |
+| `pi-retro` | scanner, reviewer | Retrospective trajectory analysis of agent runs |
 
 ## Create a Team
 

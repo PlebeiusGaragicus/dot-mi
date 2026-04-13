@@ -49,6 +49,7 @@ nav:
     - Impl: teams/impl.md
     - Blog: teams/blog.md
     - Deep Research: teams/deepresearch.md
+    - Retro: teams/retro.md
   - Reference:
     - Writing Extensions: reference/extensions.md
     - Subagent Extension: reference/subagent-teams.md

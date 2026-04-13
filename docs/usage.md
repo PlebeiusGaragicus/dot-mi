@@ -148,7 +148,37 @@ The eval runner (`evals/run-eval.sh`) tests teams against scripted prompts in no
 
 Each prompt runs in its own workspace. Results are organized by eval name (derived from the prompts filename) at `evals/results/<team>/<eval-name>/<timestamp>/` with per-prompt output files and a JSONL manifest for trajectory analysis.
 
-## 5. Ad-hoc Single Agent Use
+## 5. Trajectory Analysis (Retro)
+
+After running a workspace team, use `pi-retro` to analyze the session traces and output files for procedural issues. The retro team runs on a free open-source model and produces a structured report that can be fed to a frontier model for deeper analysis.
+
+```bash
+# cd into the workspace you want to analyze
+cd workspaces/deepresearch/2026-04-12-150258
+
+# Run the retro analysis
+pi-retro
+```
+
+**What happens:** The orchestrator surveys the current directory, finds all JSONL session files, and extracts the original user task. It then dispatches two types of subagents in parallel:
+
+1. **scanner** (one per session file) -- parses JSONL traces with jq/grep, checking for infinite loops, tool errors, failed dispatches, and protocol violations
+2. **reviewer** -- inspects output files (report.md, sources/, etc.) for completeness and instruction adherence
+
+The orchestrator synthesizes all findings into `retrospective-report.md` in the workspace directory.
+
+### Frontier model handoff
+
+The retro report is designed to be concise and structured -- ideal input for a paid frontier model:
+
+```bash
+# After pi-retro writes retrospective-report.md, feed it to a stronger model
+pi-recon "Read retrospective-report.md and suggest specific prompt or code fixes for each issue"
+```
+
+This two-step pattern keeps costs low: the bulk parsing runs for free on an open-source model, and only the compact report goes to a frontier model.
+
+## 6. Ad-hoc Single Agent Use
 
 You don't always need prompt templates. Just describe what you want:
 
@@ -165,7 +195,7 @@ pi-blog "Write a short post comparing our REST and GraphQL endpoints, keep it un
 
 The LLM sees the team's agents and decides whether to delegate via subagent or handle the task directly.
 
-## 6. Standalone Bots (No Teams)
+## 7. Standalone Bots (No Teams)
 
 For quick tasks that don't need team orchestration:
 
@@ -180,7 +210,7 @@ pexplain "How does the caching layer work?"
 
 These don't use `PI_CODING_AGENT_DIR` at all -- they pass flags directly to pi and use `~/.pi` as the config root.
 
-## 7. Create a Custom Team
+## 8. Create a Custom Team
 
 Say you want a team for writing documentation:
 
@@ -225,7 +255,7 @@ cd ~/projects/my-api
 pi-docs-team "Write API reference docs for all endpoints in src/routes/"
 ```
 
-## 8. Sharing Auth Across Teams
+## 9. Sharing Auth Across Teams
 
 Each team has its own config root, including API authentication. After you authenticate in one team, share it with others:
 
@@ -239,7 +269,7 @@ pi-recon
 ./setup.sh link-auth recon blog
 ```
 
-## 9. Check Your Setup
+## 10. Check Your Setup
 
 See what teams are configured and whether their extensions are properly linked:
 
@@ -253,6 +283,7 @@ Teams:
   deepresearch  (workspace, 4 agents, 0 prompts, extensions linked: yes)
   impl  (in-situ, 2 agents, 1 prompts, extensions linked: yes)
   recon  (in-situ, 2 agents, 1 prompts, extensions linked: yes)
+  retro  (in-situ, 2 agents, 0 prompts, extensions linked: yes)
 
 Standalone agents:
   twenty-questions  (in-situ, extensions: 1)
