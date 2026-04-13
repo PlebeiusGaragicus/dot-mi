@@ -143,23 +143,36 @@ The eval runner (`evals/run-eval.sh`) tests teams against scripted prompts in no
 
 # Comprehensive suite
 ./evals/run-eval.sh deepresearch evals/deepresearch-long.txt
+
+# With automatic retro analysis after each prompt
+./evals/run-eval.sh --with-retro deepresearch evals/deepresearch-short.txt
 ```
 
-Each prompt runs in its own workspace. Results are organized by eval name (derived from the prompts filename) at `evals/results/<team>/<eval-name>/<timestamp>/` with per-prompt output files and a JSONL manifest for trajectory analysis.
+Each prompt runs in its own workspace. Results are organized by eval name (derived from the prompts filename) at `evals/results/<team>/<eval-name>/<timestamp>/` with per-prompt output files and a JSONL manifest for trajectory analysis. When `--with-retro` is used, retro output is saved to `prompt-N-retro.txt` alongside each prompt's output.
 
 ## 5. Trajectory Analysis (Retro)
 
-After running a workspace team, use `pi-retro` to analyze the session traces and output files for procedural issues. The retro team runs on a free open-source model and produces a structured report that can be fed to a frontier model for deeper analysis.
+After running a workspace team, use the retro team to analyze session traces and output files for procedural issues. The retro team runs on a free open-source model and produces a structured report that can be fed to a frontier model for deeper analysis.
+
+### Interactive use
 
 ```bash
-# cd into the workspace you want to analyze
 cd workspaces/deepresearch/2026-04-12-150258
-
-# Run the retro analysis
 pi-retro
 ```
 
-**What happens:** The orchestrator surveys the current directory, finds all JSONL session files, and extracts the original user task. It then dispatches two types of subagents in parallel:
+### Non-interactive use (`run-retro`)
+
+Target a workspace directly without manual `cd`:
+
+```bash
+run-retro deepresearch                           # latest workspace
+run-retro deepresearch 2026-04-12               # by date prefix
+run-retro deepresearch --list                    # list workspaces
+run-retro deepresearch -- "focus on citations"  # with steering hint
+```
+
+**What happens:** The orchestrator surveys the workspace, finds all JSONL session files, and extracts the original user task. It then dispatches two types of subagents in parallel:
 
 1. **scanner** (one per session file) -- parses JSONL traces with jq/grep, checking for infinite loops, tool errors, failed dispatches, and protocol violations
 2. **reviewer** -- inspects output files (report.md, sources/, etc.) for completeness and instruction adherence
@@ -171,7 +184,7 @@ The orchestrator synthesizes all findings into `retrospective-report.md` in the 
 The retro report is designed to be concise and structured -- ideal input for a paid frontier model:
 
 ```bash
-# After pi-retro writes retrospective-report.md, feed it to a stronger model
+# After retro writes retrospective-report.md, feed it to a stronger model
 pi-recon "Read retrospective-report.md and suggest specific prompt or code fixes for each issue"
 ```
 

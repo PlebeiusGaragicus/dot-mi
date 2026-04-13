@@ -84,6 +84,73 @@ _dotmi_workspace_launch() {
   (cd "$ws" && PI_CODING_AGENT_DIR="$config_dir" pi "${_launch_args[@]}" "$@")
 }
 
+# ── retro workspace runner ──────────────────────────────────────────────────
+#
+# Non-interactive retro analysis targeting workspace directories.
+# The existing pi-retro (auto-generated below) remains for manual in-situ use.
+#
+# User-facing:
+#   run-retro <team>                        Analyze latest workspace
+#   run-retro <team> <date-prefix>          Analyze workspace matching prefix
+#   run-retro <team> --list                 List workspaces for team
+#   run-retro <team> [date] -- "hint"       With optional steering prompt
+#
+# Internal (used by eval script):
+#   run-retro --workspace-path <path> [-- "hint"]
+
+run-retro() {
+  local ws_path="" hint="" team=""
+
+  if [ "${1:-}" = "--workspace-path" ]; then
+    [ -z "${2:-}" ] && { echo "Error: --workspace-path requires a path" >&2; return 1; }
+    ws_path="$2"
+    shift 2
+    team=$(basename "$(dirname "$ws_path")")
+    if [ "${1:-}" = "--" ]; then shift; hint="$*"; fi
+  else
+    team="${1:?Usage: run-retro <team> [date-prefix] [-- hint]}"
+    shift
+    local ws_root="$DOT_MI_DIR/workspaces/$team"
+
+    if [ "${1:-}" = "--list" ]; then
+      if [ ! -d "$ws_root" ] || [ -z "$(ls -A "$ws_root" 2>/dev/null)" ]; then
+        echo "No workspaces for $team"
+        return 0
+      fi
+      echo "Workspaces for $team:"
+      for d in "$ws_root"/*/; do
+        [ -d "$d" ] || continue
+        local ts=$(basename "$d")
+        local files=$(find "$d" -maxdepth 2 -type f 2>/dev/null | wc -l | tr -d ' ')
+        local has_retro=""
+        [ -f "$d/retrospective-report.md" ] && has_retro="  [retro]"
+        echo "  $ts  ($files files)$has_retro"
+      done
+      return 0
+    fi
+
+    if [ -n "${1:-}" ] && [ "$1" != "--" ]; then
+      ws_path=$(ls -d "$ws_root/$1"* 2>/dev/null | tail -1)
+      [ -z "$ws_path" ] && { echo "No workspace matching '$1' in $ws_root" >&2; return 1; }
+      shift
+    else
+      ws_path=$(ls -dt "$ws_root"/*/ 2>/dev/null | head -1)
+      [ -z "$ws_path" ] && { echo "No workspaces for $team" >&2; return 1; }
+    fi
+
+    if [ "${1:-}" = "--" ]; then shift; hint="$*"; fi
+  fi
+
+  [ ! -d "$ws_path" ] && { echo "Error: workspace not found: $ws_path" >&2; return 1; }
+
+  local prompt="Analyze this $team workspace."
+  [ -n "$hint" ] && prompt="$prompt Focus: $hint"
+
+  local retro_dir="$DOT_MI_DIR/teams/retro"
+  echo "Retro: $ws_path"
+  (cd "$ws_path" && PI_CODING_AGENT_DIR="$retro_dir" pi -p "$prompt" < /dev/null)
+}
+
 # ── auto-generated aliases ──────────────────────────────────────────────────
 #
 # Scans teams/ and agents/ directories and creates a pi-<name> function for each.

@@ -63,6 +63,8 @@ The output report has these sections:
 
 ## Usage
 
+### Interactive (`pi-retro`)
+
 The retro team runs in-situ. `cd` into the workspace directory to analyze, then run `pi-retro`:
 
 ```bash
@@ -72,9 +74,38 @@ pi-retro
 
 The orchestrator treats the current directory as the workspace. It finds session files, dispatches analysis, and writes `retrospective-report.md` in the current directory.
 
+### Non-interactive (`run-retro`)
+
+For workspace-targeted, non-interactive use:
+
+```bash
+run-retro deepresearch                           # latest workspace
+run-retro deepresearch 2026-04-12               # by date prefix
+run-retro deepresearch --list                    # list workspaces
+run-retro deepresearch -- "focus on citations"  # with steering hint
+```
+
+`run-retro` resolves the workspace path, `cd`'s into it, and runs the retro team with `pi -p` (non-interactive, stdin closed). The team name is included in the prompt so the orchestrator knows the source team.
+
+An internal `--workspace-path` mode is also available for script integration:
+
+```bash
+run-retro --workspace-path /absolute/path/to/workspace
+```
+
+### Eval integration
+
+The eval runner supports automatic retro after each prompt via `--with-retro`:
+
+```bash
+./evals/run-eval.sh --with-retro deepresearch evals/deepresearch-short.txt
+```
+
+Retro output is saved to `prompt-N-retro.txt` alongside `prompt-N-output.txt` in the eval results directory.
+
 ### Frontier model handoff
 
-The report is designed to be fed to a frontier (paid) model for deeper analysis:
+The retro report is designed to be concise and structured -- ideal input for a paid frontier model:
 
 ```bash
 cd workspaces/deepresearch/2026-04-12-150258
