@@ -28,6 +28,8 @@ Analyzes a single JSONL session file for procedural issues. Uses jq and grep one
 
 Inspects workspace output files for completeness and instruction adherence. Checks whether expected deliverables were created, files are non-empty, structure matches instructions, all task parts are addressed, sources are referenced, and no truncation or placeholder text exists. Returns a PASS/FAIL checklist.
 
+When `.source-team-prompt.md` is present in the workspace (symlinked by `run-retro`), the reviewer reads it to understand the source team's expected workflow, agents, and deliverables -- replacing guesswork with ground truth for instruction-adherence checks.
+
 The reviewer does NOT evaluate writing quality, style, or factual accuracy.
 
 ## Workflow
@@ -82,10 +84,13 @@ For workspace-targeted, non-interactive use:
 run-retro deepresearch                           # latest workspace
 run-retro deepresearch 2026-04-12               # by date prefix
 run-retro deepresearch --list                    # list workspaces
+run-retro deepresearch --pick                   # interactive menu (newest first)
 run-retro deepresearch -- "focus on citations"  # with steering hint
 ```
 
-`run-retro` resolves the workspace path, `cd`'s into it, and runs the retro team with `pi -p` (non-interactive, stdin closed). The team name is included in the prompt so the orchestrator knows the source team.
+`--pick` shows a numbered menu (bash `select`, newest workspaces first); choose a number or **Cancel** to abort.
+
+`run-retro` resolves the workspace path, symlinks the source team's `team-prompt.md` into the workspace as `.source-team-prompt.md` (so the reviewer can check outputs against the intended workflow), then runs the retro team with `pi -p` (non-interactive, stdin closed). The team name is included in the prompt so the orchestrator knows the source team.
 
 An internal `--workspace-path` mode is also available for script integration:
 

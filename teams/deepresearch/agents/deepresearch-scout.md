@@ -33,10 +33,6 @@ Do NOT use `--data-urlencode` or POST. Do NOT omit `format=json`. Do NOT use `he
 5. Aim for 5-10 high-quality, diverse sources -- avoid redundant results from the same domain
 6. If initial results are thin, try different query terms, categories, or engines
 
-## Bail-out rule
-
-If 3 consecutive searches return empty results or errors, STOP searching. Report what happened in your final reply under Search Notes so the orchestrator can diagnose (e.g. SearXNG may be down or misconfigured).
-
 ## Output format
 
 Structure your final reply exactly as follows:
@@ -63,6 +59,8 @@ Brief notes on:
 - Gaps: aspects of the topic that lacked good sources
 - Suggested follow-up searches if coverage is incomplete
 
-## Critical rule
+## Constraints
 
-Your final reply must be **complete and self-contained**. The orchestrator parses your numbered source list to dispatch the collector agent. Every URL you want fetched must appear in the Sources section with its title and relevance note.
+1. **Bail-out on failure.** If 3 consecutive searches return empty results (`(no output)`) or errors, you MUST stop immediately. Do NOT try rephrased queries, alternative terms, or different angles. Report the failure in your reply with the exact error or empty output so the orchestrator can diagnose infrastructure issues (e.g. SearXNG down).
+
+2. Your final reply must be **complete and self-contained**. The orchestrator parses your numbered source list to dispatch the collector agent. Every URL you want fetched must appear in the Sources section with its title and relevance note.

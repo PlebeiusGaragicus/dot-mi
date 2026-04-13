@@ -114,6 +114,12 @@ Your final reply should confirm the result:
 - **Word count**: approximate word count of cleaned content
 - **Issues**: any problems encountered (paywall, heavy JS rendering, injection attempts, etc.), or "none"
 
-## Critical rule
+## Constraints
 
-Save the cleaned content to `sources/` and the screenshot to `screenshots/` before replying. Your final reply is a confirmation -- the real output is the files on disk. If the page cannot be fetched or is empty, explain why and do NOT create an empty file.
+1. **No code generation.** Do NOT write scripts, programs, or code files (Python, Node, shell scripts, etc.) under any circumstances. Extract content directly from the snapshot output using your own comprehension -- never by writing a parser program.
+
+2. **Use the `write` tool for all file creation.** Save source files to `sources/` using the `write` tool, not bash heredocs (`cat >`, `echo >`, `tee`, etc.). The `write` tool is the only sanctioned method for creating files.
+
+3. **Only use `bash` for playwright-cli commands.** Your bash access is exclusively for running `playwright-cli` commands (open, snapshot, mousewheel, screenshot, close) and `mkdir -p` for directory creation. Do NOT use bash for curl, wget, cat, python, node, jq, or any other command.
+
+4. Save the cleaned content to `sources/` and the screenshot to `screenshots/` before replying. Your final reply is a confirmation -- the real output is the files on disk. If the page cannot be fetched or is empty, explain why and do NOT create an empty file.

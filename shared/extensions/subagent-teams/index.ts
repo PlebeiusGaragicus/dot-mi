@@ -224,6 +224,15 @@ async function writePromptToTempFile(agentName: string, prompt: string): Promise
 	return { dir: tmpDir, filePath };
 }
 
+function getParentSessionConfig(): string | false | null {
+	const argv = process.argv;
+	const noSessionIdx = argv.indexOf("--no-session");
+	if (noSessionIdx !== -1) return false;
+	const sdIdx = argv.indexOf("--session-dir");
+	if (sdIdx !== -1 && sdIdx + 1 < argv.length) return argv[sdIdx + 1];
+	return null;
+}
+
 function getPiInvocation(args: string[]): { command: string; args: string[] } {
 	const currentScript = process.argv[1];
 	if (currentScript && fs.existsSync(currentScript)) {
@@ -269,14 +278,21 @@ async function runSingleAgent(
 	}
 
 	const effectiveCwd = cwd ?? defaultCwd;
-	const sessionsDir = path.join(effectiveCwd, "sessions");
-	const legacySessionsDir = path.join(effectiveCwd, "subagent-sessions");
-	const sessionDir = fs.existsSync(sessionsDir) ? sessionsDir : fs.existsSync(legacySessionsDir) ? legacySessionsDir : null;
 	const args: string[] = ["--mode", "json", "-p"];
-	if (sessionDir) {
-		args.push("--session-dir", sessionDir);
-	} else {
+	const parentConfig = getParentSessionConfig();
+	if (parentConfig === false) {
 		args.push("--no-session");
+	} else if (parentConfig !== null) {
+		args.push("--session-dir", parentConfig);
+	} else {
+		const sessionsDir = path.join(effectiveCwd, "sessions");
+		const legacySessionsDir = path.join(effectiveCwd, "subagent-sessions");
+		const sessionDir = fs.existsSync(sessionsDir) ? sessionsDir : fs.existsSync(legacySessionsDir) ? legacySessionsDir : null;
+		if (sessionDir) {
+			args.push("--session-dir", sessionDir);
+		} else {
+			args.push("--no-session");
+		}
 	}
 	if (agent.model) args.push("--model", agent.model);
 	if (agent.tools && agent.tools.length > 0) args.push("--tools", agent.tools.join(","));

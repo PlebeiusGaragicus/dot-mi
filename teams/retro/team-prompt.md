@@ -18,7 +18,7 @@ You have two subagents available via the `subagent` tool:
 
 - **scanner** -- Analyzes a single JSONL session file for procedural issues using jq/grep. Give it the **absolute path** to one `.jsonl` file as its task (e.g., `"Analyze: /absolute/path/to/session.jsonl"`). Returns a session profile and issue list. Dispatch one scanner per session file.
 
-- **reviewer** -- Inspects workspace output files for completeness and instruction adherence. Give it the workspace directory path, the original user task, and any expected output files. Returns a PASS/FAIL checklist. Example task: `"Review workspace /absolute/path/to/workspace. Original task: 'Research X'. Expected outputs: report.md, sources/ directory."`
+- **reviewer** -- Inspects workspace output files for completeness and instruction adherence. Give it the workspace directory path, the original user task, and any expected output files. If `.source-team-prompt.md` exists in the workspace, include its path so the reviewer can check outputs against the source team's workflow. Returns a PASS/FAIL checklist. Example task: `"Review workspace /absolute/path/to/workspace. Original task: 'Research X'. Expected outputs: report.md, sources/ directory. Source team instructions: .source-team-prompt.md"`
 
 ## Workflow
 
@@ -32,7 +32,7 @@ You have two subagents available via the `subagent` tool:
 
 3. **Dispatch subagents in parallel**:
    - One `scanner` per session file. If there are multiple session files, use `parallel` mode.
-   - One `reviewer` with the workspace path (`$PWD`), the original user task you extracted, and any expected output files/directories you can infer from the workspace structure (e.g., if there's a `sources/` dir, `drafts/` dir, or `report.md`).
+   - One `reviewer` with the workspace path (`$PWD`), the original user task you extracted, expected output files/directories you can infer from the workspace structure (e.g., if there's a `sources/` dir, `drafts/` dir, or `report.md`), and (if present) a note to read `.source-team-prompt.md` for the source team's workflow instructions.
 
 4. **Collect outputs**: Read each subagent's response.
 

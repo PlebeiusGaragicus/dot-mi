@@ -34,6 +34,8 @@ subagent tool call:
   task: "Research topic: <user's topic>"
 ```
 
+If the scout reports that searches returned empty results or errors, do NOT dispatch collectors. Report the infrastructure issue to the user and suggest they check SearXNG.
+
 ### Step 2: Collector (parallel)
 
 Parse the scout's source list. Dispatch one collector per URL in parallel. Each collector saves its content to `sources/` and a screenshot to `screenshots/`. Assign each collector a unique number to avoid browser session collisions.

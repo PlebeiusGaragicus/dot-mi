@@ -169,6 +169,7 @@ Target a workspace directly without manual `cd`:
 run-retro deepresearch                           # latest workspace
 run-retro deepresearch 2026-04-12               # by date prefix
 run-retro deepresearch --list                    # list workspaces
+run-retro deepresearch --pick                   # interactive menu (newest first)
 run-retro deepresearch -- "focus on citations"  # with steering hint
 ```
 

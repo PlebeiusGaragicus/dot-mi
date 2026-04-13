@@ -93,6 +93,7 @@ _dotmi_workspace_launch() {
 #   run-retro <team>                        Analyze latest workspace
 #   run-retro <team> <date-prefix>          Analyze workspace matching prefix
 #   run-retro <team> --list                 List workspaces for team
+#   run-retro <team> --pick                 Interactive menu to choose a workspace
 #   run-retro <team> [date] -- "hint"       With optional steering prompt
 #
 # Internal (used by eval script):
@@ -108,7 +109,7 @@ run-retro() {
     team=$(basename "$(dirname "$ws_path")")
     if [ "${1:-}" = "--" ]; then shift; hint="$*"; fi
   else
-    team="${1:?Usage: run-retro <team> [date-prefix] [-- hint]}"
+    team="${1:?Usage: run-retro <team> [--list|--pick] [date-prefix] [-- hint]}"
     shift
     local ws_root="$DOT_MI_DIR/workspaces/$team"
 
@@ -129,7 +130,46 @@ run-retro() {
       return 0
     fi
 
-    if [ -n "${1:-}" ] && [ "$1" != "--" ]; then
+    if [ "${1:-}" = "--pick" ]; then
+      shift
+      local pick_paths=()
+      local pick_labels=()
+      local _d
+      while IFS= read -r _d; do
+        [ -z "$_d" ] && continue
+        _d="${_d%/}"
+        [ ! -d "$_d" ] && continue
+        pick_paths+=("$_d")
+        local _ts=$(basename "$_d")
+        local _files=$(find "$_d" -maxdepth 2 -type f 2>/dev/null | wc -l | tr -d ' ')
+        local _hr=""
+        [ -f "$_d/retrospective-report.md" ] && _hr=" [retro]"
+        pick_labels+=("$_ts  ($_files files)$_hr")
+      done < <(ls -dt "$ws_root"/*/ 2>/dev/null)
+      if [ ${#pick_paths[@]} -eq 0 ]; then
+        echo "No workspaces for $team" >&2
+        return 1
+      fi
+      echo "Select a workspace for $team:"
+      local PS3="Number: "
+      local _choice
+      select _choice in "${pick_labels[@]}" "Cancel"; do
+        if [ "$_choice" = "Cancel" ]; then
+          echo "Cancelled." >&2
+          return 1
+        fi
+        if [ -z "$_choice" ]; then
+          echo "Invalid choice; try again." >&2
+          continue
+        fi
+        local _idx=$((REPLY - 1))
+        if [ "$_idx" -ge 0 ] && [ "$_idx" -lt ${#pick_paths[@]} ]; then
+          ws_path="${pick_paths[$_idx]}"
+          break
+        fi
+        echo "Invalid choice; try again." >&2
+      done
+    elif [ -n "${1:-}" ] && [ "$1" != "--" ]; then
       ws_path=$(ls -d "$ws_root/$1"* 2>/dev/null | tail -1)
       [ -z "$ws_path" ] && { echo "No workspace matching '$1' in $ws_root" >&2; return 1; }
       shift
@@ -143,12 +183,19 @@ run-retro() {
 
   [ ! -d "$ws_path" ] && { echo "Error: workspace not found: $ws_path" >&2; return 1; }
 
+  local team_prompt="$DOT_MI_DIR/teams/$team/team-prompt.md"
+  if [ -f "$team_prompt" ] && [ ! -e "$ws_path/.source-team-prompt.md" ]; then
+    ln -s "$team_prompt" "$ws_path/.source-team-prompt.md"
+  fi
+
   local prompt="Analyze this $team workspace."
   [ -n "$hint" ] && prompt="$prompt Focus: $hint"
 
   local retro_dir="$DOT_MI_DIR/teams/retro"
+  local retro_sessions="$retro_dir/sessions"
+  mkdir -p "$retro_sessions"
   echo "Retro: $ws_path"
-  (cd "$ws_path" && PI_CODING_AGENT_DIR="$retro_dir" pi -p "$prompt" < /dev/null)
+  (cd "$ws_path" && PI_CODING_AGENT_DIR="$retro_dir" pi --session-dir "$retro_sessions" -p "$prompt" < /dev/null)
 }
 
 # ── auto-generated aliases ──────────────────────────────────────────────────

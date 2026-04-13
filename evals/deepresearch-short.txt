@@ -1,3 +1,1 @@
-Lookup how many voters are registered in the state of Oregon and under which party they are registered.
-I want to know the best way to run image generation on a MacOS machine - ComfyUI, for example, works but is slow - report on recent advancements in open-source imagen models and local inference tools for image generation.
 Explain the benefits and recent trend/popularity of taking daily creatine.
