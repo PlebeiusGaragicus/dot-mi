@@ -64,7 +64,7 @@ teams/<name>/
 ├── prompts/                  # Prompt templates (slash-command workflows)
 ├── skills/                   # Symlinked from shared/skills/ (per-skill)
 ├── themes/                   # Symlinked from shared/themes/
-├── team-prompt.md            # Orchestrator instructions (injected into main agent)
+├── team-prompt.md            # Orchestrator config (frontmatter) + system prompt (body)
 ├── banner.txt                # Startup branding (ASCII art + usage text)
 ├── workspace.conf            # (optional) Marks as workspace agent; lists subdirs to pre-create
 ├── bin/                      # → shared/bin/

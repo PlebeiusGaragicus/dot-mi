@@ -1,3 +1,0 @@
-# Orchestrator can only read/inspect files and write the final report.
-# bash is excluded -- all jq/grep parsing is delegated to the scanner subagent.
---tools read,find,ls,grep,write

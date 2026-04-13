@@ -1,3 +1,0 @@
-# Orchestrator can only read/inspect files and delegate via subagent tool.
-# bash, write, edit are intentionally excluded to force subagent delegation.
---tools read,find,ls,grep

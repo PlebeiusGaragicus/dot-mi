@@ -16,23 +16,6 @@ DOT_MI_DIR="${DOT_MI_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" && pwd)}"
 # Load API keys if present
 [ -f "$DOT_MI_DIR/.env" ] && source "$DOT_MI_DIR/.env"
 
-# ── pi.flags reader ──────────────────────────────────────────────────────────
-#
-# Reads per-team default CLI flags from <team>/pi.flags (if present).
-# One flag per line; comments (#) and blank lines are ignored.
-# Flags are applied before "$@" so the user can override at invocation time.
-
-_dotmi_read_flags() {
-  _DOTMI_FLAGS=()
-  local flags_file="$1/pi.flags"
-  [ -f "$flags_file" ] || return 0
-  # zsh doesn't word-split unquoted vars by default; enable it locally
-  [ -n "${ZSH_VERSION:-}" ] && setopt local_options shwordsplit
-  while IFS= read -r line || [ -n "$line" ]; do
-    [[ -n "$line" && "$line" != \#* ]] && _DOTMI_FLAGS+=($line)
-  done < "$flags_file"
-}
-
 # ── workspace launcher ───────────────────────────────────────────────────────
 #
 # Used by auto-generated aliases when a team/agent has a workspace.conf file.
@@ -83,10 +66,9 @@ _dotmi_workspace_launch() {
       fi
     fi
     echo "Resuming: $target"
-    _dotmi_read_flags "$config_dir"
     local _resume_args=()
     [ -d "$target/sessions" ] && _resume_args+=(--session-dir "$target/sessions")
-    (cd "$target" && PI_CODING_AGENT_DIR="$config_dir" pi "${_resume_args[@]}" "${_DOTMI_FLAGS[@]}" --resume "$@")
+    (cd "$target" && PI_CODING_AGENT_DIR="$config_dir" pi "${_resume_args[@]}" --resume "$@")
     return
   fi
 
@@ -97,10 +79,9 @@ _dotmi_workspace_launch() {
     [[ -n "$subdir" && "$subdir" != \#* ]] && mkdir -p "$ws/$subdir"
   done < "$config_dir/workspace.conf"
   echo "Workspace: $ws"
-  _dotmi_read_flags "$config_dir"
   local _launch_args=()
   [ -d "$ws/sessions" ] && _launch_args+=(--session-dir "$ws/sessions")
-  (cd "$ws" && PI_CODING_AGENT_DIR="$config_dir" pi "${_launch_args[@]}" "${_DOTMI_FLAGS[@]}" "$@")
+  (cd "$ws" && PI_CODING_AGENT_DIR="$config_dir" pi "${_launch_args[@]}" "$@")
 }
 
 # ── auto-generated aliases ──────────────────────────────────────────────────
@@ -115,7 +96,7 @@ for _dotmi_dir in "$DOT_MI_DIR"/{teams,agents}/*/; do
   if [ -f "$_dotmi_dir/workspace.conf" ]; then
     eval "pi-${_dotmi_name}() { _dotmi_workspace_launch \"${_dotmi_name}\" \"$_dotmi_dir\" \"\$@\"; }"
   else
-    eval "pi-${_dotmi_name}() { _dotmi_read_flags \"$_dotmi_dir\"; PI_CODING_AGENT_DIR=\"$_dotmi_dir\" pi \"\${_DOTMI_FLAGS[@]}\" \"\$@\"; }"
+    eval "pi-${_dotmi_name}() { PI_CODING_AGENT_DIR=\"$_dotmi_dir\" pi \"\$@\"; }"
   fi
 done
 unset _dotmi_dir _dotmi_name

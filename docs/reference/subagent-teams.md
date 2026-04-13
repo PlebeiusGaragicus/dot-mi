@@ -98,11 +98,31 @@ Up to 8 tasks, 4 concurrent.
 
 Sequential pipeline. `{previous}` is replaced with the prior step's output.
 
-## Team Prompt Injection
+## Team Prompt (`team-prompt.md`)
 
-If `<agentDir>/team-prompt.md` exists, the extension loads it at startup and registers a `before_agent_start` hook that appends its contents to the orchestrator's system prompt. This gives the parent pi process team-specific context -- available agents, workflows, and constraints.
+If `<agentDir>/team-prompt.md` exists, the extension parses its YAML frontmatter and body at startup. The frontmatter configures the orchestrator; the body is appended to the orchestrator's system prompt.
 
-The injection is gated on the `PI_IS_SUBAGENT` environment variable. The extension sets `PI_IS_SUBAGENT=1` in the environment of every child pi process it spawns, so subagents never receive the team prompt. This works correctly for both interactive sessions and non-interactive runs (eval scripts, piped output).
+All configuration is gated on `PI_IS_SUBAGENT` -- subagent child processes have `PI_IS_SUBAGENT=1` set in their environment by the extension, so they do not receive team-level configuration. This works correctly for both interactive sessions and non-interactive runs (eval scripts, piped output).
+
+Startup branding is handled separately by `banner.txt` + the `startup-branding.ts` extension (not by frontmatter).
+
+### Frontmatter Fields
+
+```yaml
+---
+tools: read, find, ls, grep
+model: plebchat/qwen/qwen3-coder-next
+---
+```
+
+| Field | Effect |
+|-------|--------|
+| `tools` | Comma-separated tool whitelist for the orchestrator. The `subagent` tool is always included automatically. Omit to keep all default tools. |
+| `model` | `provider/modelId` format. Sets the orchestrator's model on session start. Omit to use the default model. |
+
+### Body
+
+The markdown body (below the frontmatter) is appended to the orchestrator's system prompt via a `before_agent_start` hook. Use it to give the parent pi process team-specific context: available agents, workflows, and behavioral constraints.
 
 ## Agent Discovery
 

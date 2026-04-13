@@ -6,7 +6,7 @@ Produces a structured `retrospective-report.md` designed for consumption by a fr
 
 ## Orchestrator
 
-The orchestrator has restricted tools (`read,find,ls,grep,write` via `pi.flags`). It cannot run `bash` directly -- all jq/grep-based JSONL parsing is delegated to the scanner subagent. The orchestrator surveys the workspace, dispatches subagents, and synthesizes findings into the final report.
+The orchestrator has restricted tools (`read,find,ls,grep,write` via `team-prompt.md` frontmatter). It cannot run `bash` directly -- all jq/grep-based JSONL parsing is delegated to the scanner subagent. The orchestrator surveys the workspace, dispatches subagents, and synthesizes findings into the final report.
 
 ## Agents
 
@@ -86,9 +86,16 @@ pi-retro
 pi-recon "Read retrospective-report.md and suggest specific fixes for each issue found"
 ```
 
-## Configuration Files
+## Configuration
 
-| File | Purpose |
-|------|---------|
-| `pi.flags` | Restricts orchestrator to `--tools read,find,ls,grep,write` |
-| `team-prompt.md` | Orchestrator system prompt with team context and workflow instructions |
+All configuration is in `team-prompt.md` YAML frontmatter:
+
+```yaml
+---
+name: Retro
+description: Retrospective trajectory analysis. Run from inside a workspace directory.
+tools: read, find, ls, grep, write
+---
+```
+
+The body of `team-prompt.md` provides the orchestrator's system prompt with team context and workflow instructions.

@@ -13,8 +13,7 @@ pi resolves its config root via `getAgentDir()` in the coding-agent package. Thi
 - `settings.json` -- pi settings
 - `models.json` -- custom model providers
 - `auth.json` -- API authentication
-- `team-prompt.md` -- orchestrator system prompt (loaded by the subagent-teams extension)
-- `pi.flags` -- default CLI flags applied by bash_aliases (e.g. `--tools read,find,ls,grep`)
+- `team-prompt.md` -- orchestrator config and system prompt (YAML frontmatter parsed by the subagent-teams extension for name, description, tools, model; body appended to system prompt)
 - `workspace.conf` -- workspace subdirectory list (triggers workspace mode in bash_aliases)
 
 This is the mechanism dot-mi exploits for both team isolation and standalone agent configurations.
@@ -47,7 +46,7 @@ dot-mi/
 │   │   ├── prompts/          # implement.md
 │   │   ├── skills/           # ← individual symlinks to shared/skills/*/
 │   │   ├── themes/           # ← individual symlinks to shared/themes/*
-│   │   ├── team-prompt.md    # orchestrator system prompt (optional)
+│   │   ├── team-prompt.md    # orchestrator config + system prompt (frontmatter: tools, model)
 │   │   ├── banner.txt        # startup branding (ASCII art + usage)
 │   │   ├── bin/              # ← symlink to shared/bin/
 │   │   ├── sessions/         # runtime (gitignored)
@@ -55,8 +54,7 @@ dot-mi/
 │   │   └── models.json       # ← symlink to shared/models.json
 │   ├── deepresearch/
 │   │   ├── ...               # same structure as above
-│   │   ├── workspace.conf    # triggers workspace mode (dated directories)
-│   │   └── pi.flags          # restricts orchestrator tools
+│   │   └── workspace.conf    # triggers workspace mode (dated directories)
 │   ├── impl/
 │   └── blog/
 ├── agents/                   # Standalone agent directories
@@ -96,16 +94,16 @@ graph TD
 graph TD
   WUser["User runs: pi-deepresearch 'topic'"]
   WAlias["bash alias calls<br/>_dotmi_workspace_launch"]
-  WFlags["Reads pi.flags<br/>(--tools read,find,ls,grep)"]
   WDir["Creates dated workspace<br/>workspaces/deepresearch/timestamp/"]
-  WPi["pi starts with restricted tools"]
-  WTeamPrompt["before_agent_start loads<br/>team-prompt.md into system prompt"]
+  WPi["pi starts"]
+  WFrontmatter["subagent-teams extension parses<br/>team-prompt.md frontmatter<br/>(sets tools, model, header)"]
+  WTeamPrompt["before_agent_start appends<br/>team-prompt.md body to system prompt"]
   WSubagent["Orchestrator delegates via<br/>subagent tool (scout, collector, writer, editor)"]
   WChild["Child pi processes spawn<br/>with PI_IS_SUBAGENT=1"]
   WReport["Final report.md in workspace"]
 
-  WUser --> WAlias --> WFlags --> WDir --> WPi
-  WPi --> WTeamPrompt --> WSubagent --> WChild --> WReport
+  WUser --> WAlias --> WDir --> WPi
+  WPi --> WFrontmatter --> WTeamPrompt --> WSubagent --> WChild --> WReport
 ```
 
 ### Standalone Agent Flow
@@ -126,23 +124,31 @@ See [Standalone Agents](standalone-agents.md) for details.
 
 ## Team-Level Configuration
 
-### `team-prompt.md` -- Orchestrator System Prompt
+### `team-prompt.md` -- Orchestrator Config and System Prompt
 
-If `<agentDir>/team-prompt.md` exists, the `subagent-teams` extension appends its contents to the orchestrator's system prompt via a `before_agent_start` hook. This gives the parent pi process team-specific context: what agents are available, recommended workflows, and behavioral constraints.
+The `subagent-teams` extension parses `team-prompt.md` YAML frontmatter at startup, then applies configuration on `session_start`. The markdown body is appended to the orchestrator's system prompt via a `before_agent_start` hook.
 
-The injection is gated on `PI_IS_SUBAGENT` -- subagent child processes have `PI_IS_SUBAGENT=1` set in their environment by the extension, so they do not receive the team prompt. This works correctly for both interactive sessions and non-interactive runs (eval scripts, piped output).
+```yaml
+---
+name: Deep Research
+description: Search, collect, synthesize, report.
+tools: read, find, ls, grep
+model: plebchat/qwen/qwen3-coder-next
+---
 
-### `pi.flags` -- Default CLI Flags
+# Deep Research Team
 
-If `<teamDir>/pi.flags` exists, `bash_aliases` reads it and prepends the flags to the pi invocation. One flag per line; comments (`#`) and blank lines are ignored. User-provided flags come after and can override.
-
-Example (`teams/deepresearch/pi.flags`):
-
+You are the orchestrator for a deep research team...
 ```
---tools read,find,ls,grep
-```
 
-This restricts the orchestrator to read-only tools, forcing it to delegate all work through the `subagent` extension tool. Extension-registered tools (like `subagent`) are unaffected by `--tools`.
+| Field | Effect |
+|-------|--------|
+| `name` | Rendered as a bold accent header at startup |
+| `description` | Rendered below the name in dim text |
+| `tools` | Comma-separated tool whitelist for the orchestrator. The `subagent` tool is always included automatically. Omit to keep all default tools. |
+| `model` | `provider/modelId` format. Sets the orchestrator's model on session start. Omit to use the default. |
+
+All frontmatter configuration is gated on `PI_IS_SUBAGENT` -- subagent child processes do not receive team-level configuration. This works correctly for both interactive sessions and non-interactive runs.
 
 ## Extension Architecture
 
@@ -177,7 +183,7 @@ Each team and standalone agent directory is a complete pi config root. This prov
 - **Session isolation** -- separate conversation history per team
 - **Settings isolation** -- per-team model preferences and configuration
 
-Shared resources (extensions, skills, themes, models, binaries) are symlinked from `shared/` to avoid duplication while preserving isolation boundaries. Downloaded binaries (`fd`, `rg`) are written once to `shared/bin/` through directory symlinks and shared across all teams automatically. Individual agents can further restrict which skills they load via frontmatter. Orchestrator tools can be restricted per-team via `pi.flags` (e.g. removing `bash` to force subagent delegation).
+Shared resources (extensions, skills, themes, models, binaries) are symlinked from `shared/` to avoid duplication while preserving isolation boundaries. Downloaded binaries (`fd`, `rg`) are written once to `shared/bin/` through directory symlinks and shared across all teams automatically. Individual agents can further restrict which skills they load via frontmatter. Orchestrator tools can be restricted per-team via the `tools` field in `team-prompt.md` frontmatter (e.g. restricting to `read,find,ls,grep` to force subagent delegation).
 
 For shared authentication across teams and agents, symlink `auth.json`:
 

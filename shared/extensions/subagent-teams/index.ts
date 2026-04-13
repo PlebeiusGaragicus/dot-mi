@@ -24,7 +24,7 @@ import * as path from "node:path";
 import type { AgentToolResult } from "@mariozechner/pi-agent-core";
 import type { Message } from "@mariozechner/pi-ai";
 import { StringEnum } from "@mariozechner/pi-ai";
-import { type ExtensionAPI, getAgentDir, getMarkdownTheme, withFileMutationQueue } from "@mariozechner/pi-coding-agent";
+import { type ExtensionAPI, getAgentDir, getMarkdownTheme, parseFrontmatter, withFileMutationQueue } from "@mariozechner/pi-coding-agent";
 import { Container, Markdown, Spacer, Text } from "@mariozechner/pi-tui";
 import { Type } from "@sinclair/typebox";
 import { type AgentConfig, type AgentScope, discoverAgents, getAvailableTeams } from "./agents.js";
@@ -457,19 +457,51 @@ const SubagentParams = Type.Object({
 export default function (pi: ExtensionAPI) {
 	const agentDir = getAgentDir();
 	const teamPromptPath = path.join(agentDir, "team-prompt.md");
-	let teamPrompt: string | null = null;
+	let teamPromptBody: string | null = null;
+	let teamTools: string[] | null = null;
+	let teamModel: string | null = null;
+
 	try {
 		if (fs.existsSync(teamPromptPath)) {
-			teamPrompt = fs.readFileSync(teamPromptPath, "utf-8").trim();
+			const raw = fs.readFileSync(teamPromptPath, "utf-8").trim();
+			const { frontmatter, body } = parseFrontmatter<Record<string, string>>(raw);
+			teamPromptBody = body.trim() || null;
+			teamModel = frontmatter.model || null;
+			if (frontmatter.tools) {
+				teamTools = frontmatter.tools
+					.split(",")
+					.map((t: string) => t.trim())
+					.filter(Boolean);
+			}
 		}
 	} catch {
 		/* ignore */
 	}
 
-	if (teamPrompt && !process.env.PI_IS_SUBAGENT) {
-		pi.on("before_agent_start", async (event) => {
-			return { systemPrompt: event.systemPrompt + "\n\n" + teamPrompt };
-		});
+	if (!process.env.PI_IS_SUBAGENT) {
+		if (teamTools) {
+			pi.on("session_start", async () => {
+				pi.setActiveTools([...teamTools!, "subagent"]);
+			});
+		}
+
+		if (teamModel) {
+			pi.on("session_start", async (_event, ctx) => {
+				const sep = teamModel!.indexOf("/");
+				if (sep > 0) {
+					const provider = teamModel!.slice(0, sep);
+					const modelId = teamModel!.slice(sep + 1);
+					const model = ctx.modelRegistry.find(provider, modelId);
+					if (model) await pi.setModel(model);
+				}
+			});
+		}
+
+		if (teamPromptBody) {
+			pi.on("before_agent_start", async (event) => {
+				return { systemPrompt: event.systemPrompt + "\n\n" + teamPromptBody };
+			});
+		}
 	}
 
 	pi.registerTool({

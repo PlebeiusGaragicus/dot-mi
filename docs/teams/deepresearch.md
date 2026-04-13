@@ -4,7 +4,7 @@ Comprehensive web research with source collection, synthesis, and editorial revi
 
 ## Orchestrator
 
-The orchestrator has restricted tools (`read,find,ls,grep` via `pi.flags`) and cannot fetch URLs or run commands directly. It must delegate all work through the subagent pipeline. The `team-prompt.md` file gives it detailed context about the team's agents, workflows, and constraints.
+The orchestrator has restricted tools (`read,find,ls,grep` via `team-prompt.md` frontmatter) and cannot fetch URLs or run commands directly. It must delegate all work through the subagent pipeline. The body of `team-prompt.md` gives it detailed context about the team's agents, workflows, and constraints.
 
 ## Agents
 
@@ -66,13 +66,24 @@ workspaces/deepresearch/2026-04-12-141259/
 └── report.md         # Final deliverable
 ```
 
-## Configuration Files
+## Configuration
+
+All orchestrator configuration is in `team-prompt.md` YAML frontmatter:
+
+```yaml
+---
+name: Deep Research
+description: Search, collect, synthesize, report. Each run gets its own workspace.
+tools: read, find, ls, grep
+---
+```
+
+The body of `team-prompt.md` provides the orchestrator's system prompt with team context and workflow instructions.
 
 | File | Purpose |
 |------|---------|
 | `workspace.conf` | Lists subdirectories to pre-create (`sources`, `screenshots`, `drafts`, `sessions`) |
-| `pi.flags` | Restricts orchestrator to `--tools read,find,ls,grep` |
-| `team-prompt.md` | Orchestrator system prompt with team context and workflow instructions |
+| `team-prompt.md` | Orchestrator config (frontmatter) and system prompt (body) |
 
 ## Usage
 

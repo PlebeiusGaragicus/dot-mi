@@ -97,6 +97,19 @@ SETTINGS
     echo "Warning: figlet not installed -- skipping banner.txt (brew install figlet)"
   fi
 
+  # Scaffold default team-prompt.md with name/description frontmatter
+  cat > "$team_dir/team-prompt.md" <<TEAMPROMPT
+---
+name: $(echo "$team_name" | sed 's/./\U&/')
+description: $team_name agent team.
+---
+
+# $team_name Team
+
+You are the orchestrator for the $team_name team. Add your orchestrator prompt here.
+TEAMPROMPT
+  echo "Created team-prompt.md (edit to customize)"
+
   if [ "$workspace" = true ]; then
     cat > "$team_dir/workspace.conf" <<'WSCONF'
 # Subdirectories to pre-create in each workspace run.
@@ -120,9 +133,10 @@ WSCONF
   echo "    themes/              (individual themes symlinked from shared)"
   echo "    bin/                 (symlinked to shared/bin, gitignored contents)"
   echo "    sessions/            (runtime session data, gitignored)"
+  echo "    team-prompt.md       (orchestrator prompt with tools/model frontmatter)"
+  echo "    banner.txt           (startup branding -- edit to customize)"
   echo "    models.json          (symlinked to shared)"
   echo "    settings.json        (theme + quietStartup defaults)"
-  echo "    banner.txt           (startup branding -- edit to customize)"
   [ "$workspace" = true ] && echo "    workspace.conf       (workspace subdirectory list)"
   echo ""
   echo "Next steps:"
