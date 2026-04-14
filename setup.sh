@@ -172,6 +172,7 @@ create_agent() {
   # Symlink shared extensions (but NOT subagent-teams -- standalone agents don't need it).
   ln -sf "../../../shared/extensions/run-finish-notify.ts" "$agent_dir/extensions/run-finish-notify.ts"
   ln -sf "../../../shared/extensions/startup-branding.ts" "$agent_dir/extensions/startup-branding.ts"
+  ln -sf "../../../shared/extensions/agent-prompt.ts" "$agent_dir/extensions/agent-prompt.ts"
 
   # Create a stub extension for the agent to customize
   cat > "$agent_dir/extensions/$agent_name/index.ts" <<'STUB'

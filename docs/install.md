@@ -97,6 +97,7 @@ teams/<team-name>/
 ├── skills/              (individual skills symlinked from shared)
 │   ├── playwright -> ../../../shared/skills/playwright
 │   ├── searxng -> ../../../shared/skills/searxng
+│   ├── tavily -> ../../../shared/skills/tavily
 │   └── ...
 ├── themes/              (individual themes symlinked from shared)
 │   └── synthwave.json -> ../../../shared/themes/synthwave.json
@@ -136,6 +137,7 @@ agents/<agent-name>/
 ├── extensions/
 │   ├── <agent-name>/
 │   │   └── index.ts         (stub -- your custom extension)
+│   ├── agent-prompt.ts -> ../../../shared/extensions/agent-prompt.ts
 │   ├── run-finish-notify.ts -> ../../../shared/extensions/run-finish-notify.ts
 │   └── startup-branding.ts -> ../../../shared/extensions/startup-branding.ts
 ├── skills/              (individual skills symlinked from shared)
@@ -147,7 +149,7 @@ agents/<agent-name>/
 └── models.json -> ../../shared/models.json
 ```
 
-Unlike teams, standalone agents do **not** get the `subagent-teams` extension or an `agents/` subdirectory. The main pi process IS the agent, and behavior is customized through the extension. `bash_aliases` wires each agent into `p <name>`.
+Unlike teams, standalone agents do **not** get the `subagent-teams` extension or an `agents/` subdirectory. The main pi process IS the agent, and behavior is customized through the extension. The `agent-prompt.ts` extension enables `AGENT.md` support (see [Standalone Agents](standalone-agents.md)). `bash_aliases` wires each agent into `p <name>`.
 
 Example:
 

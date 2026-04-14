@@ -68,7 +68,12 @@ Same `PI_CODING_AGENT_DIR` root but without subagent orchestration:
 agents/<name>/
 ├── extensions/
 │   ├── <name>/               # Custom extension (index.ts)
-│   └── ...                   # Shared extensions symlinked from shared/extensions/
+│   ├── agent-prompt.ts       # Shared: loads AGENT.md frontmatter (tools, model) + body
+│   └── ...                   # Other shared extensions symlinked from shared/extensions/
+├── AGENT.md                  # (optional) YAML frontmatter (tools, model) + body appended to system prompt
+├── SYSTEM.md                 # (optional) Replaces pi's default system prompt (pi-native)
+├── APPEND_SYSTEM.md          # (optional) Appends to pi's default system prompt (pi-native)
+├── pi-args                   # (optional) Default CLI flags, one per line (read by p dispatcher)
 ├── skills/                   # Per-skill symlinks from shared/skills/
 ├── themes/                   # Per-theme symlinks from shared/themes/
 ├── banner.txt                # Startup branding (ASCII art + usage text)
@@ -81,6 +86,12 @@ agents/<name>/
 ```
 
 No `agents/` subdirectory, no `team-prompt.md`. The main pi process IS the agent. Custom behavior comes from the extension.
+
+**Prompt and tool customization** (two methods, can be combined):
+
+1. **`AGENT.md`** (via the `agent-prompt` shared extension): YAML frontmatter sets `tools` (comma-separated whitelist) and/or `model` (`provider/modelId`). The markdown body is appended to the system prompt. This mirrors `team-prompt.md` for teams.
+2. **`SYSTEM.md` / `APPEND_SYSTEM.md`** (pi-native): `SYSTEM.md` replaces pi's default system prompt entirely; `APPEND_SYSTEM.md` appends to it. No extension needed — pi discovers these from `PI_CODING_AGENT_DIR` at startup.
+3. **`pi-args`** (via `p` dispatcher): plain text file with default CLI flags (e.g. `--tools websearch`, `--no-tools`, `--no-skills`), one per line. The `p` function prepends these to the `pi` invocation.
 
 ## Key Concepts
 
@@ -279,7 +290,12 @@ Then: add agent `.md` files to `agents/`, write `team-prompt.md`, add prompt tem
 ./setup.sh create-agent --workspace <agent-name>   # workspace mode
 ```
 
-Then: edit `agents/<name>/extensions/<name>/index.ts` for custom behavior.
+Then customize using one or both methods:
+
+1. **`AGENT.md`** — add YAML frontmatter (`tools`, `model`) and a markdown body (appended to system prompt). Loaded by the `agent-prompt` shared extension (auto-symlinked by `setup.sh`).
+2. **`SYSTEM.md` + `pi-args`** — `SYSTEM.md` replaces the default prompt (pi-native); `pi-args` sets CLI flags like `--no-tools` or `--tools read,bash` (read by the `p` dispatcher).
+
+Optionally edit `agents/<name>/extensions/<name>/index.ts` for custom tools or lifecycle hooks.
 
 ### Add a shared skill
 
@@ -307,6 +323,10 @@ Then: edit `agents/<name>/extensions/<name>/index.ts` for custom behavior.
 | `teams/*/team-prompt.md` | Yes | Team orchestrator instructions |
 | `*/banner.txt` | Yes | Startup branding (ASCII art + usage text) |
 | `*/workspace.conf` | Yes | Workspace subdirectory list (presence marks workspace mode) |
+| `agents/*/AGENT.md` | Yes | Agent prompt config (frontmatter: tools, model; body: system prompt append) |
+| `agents/*/SYSTEM.md` | Yes | Replaces pi's default system prompt (pi-native) |
+| `agents/*/APPEND_SYSTEM.md` | Yes | Appends to pi's default system prompt (pi-native) |
+| `agents/*/pi-args` | Yes | Default CLI flags for the agent (read by `p` dispatcher) |
 | `agents/*/extensions/**/*.ts` | Yes | Custom agent extensions |
 | `setup.sh` | Yes | Team/agent scaffolding |
 | `bash_aliases` | Yes | Shell functions: `p` command |

@@ -100,7 +100,7 @@ p deepresearch "What are the latest developments in WebTransport protocol?"
 
 **What happens:** `p` creates `workspaces/deepresearch/<timestamp>/` with `sources/`, `screenshots/`, `drafts/`, and `sessions/` subdirectories, then launches pi inside it. The orchestrator's tools are restricted to `read,find,ls,grep` via `team-prompt.md` frontmatter, so it cannot curl or bash its way through -- it must delegate all work to subagents. Both the orchestrator and all subagent sessions are stored in `sessions/` for unified trajectory analysis. The orchestrator runs a four-step pipeline:
 
-1. **scout** searches SearXNG for relevant sources
+1. **scout** searches the web via Tavily API for relevant sources
 2. **collector** (parallel, one per URL) fetches each page via headless browser, strips boilerplate, saves to `sources/`
 3. **writer** reads all sources and synthesizes a structured report to `drafts/report.md`
 4. **editor** reviews the draft against sources and produces `report.md`
@@ -299,5 +299,7 @@ Teams:
   retro  (in-situ, 2 agents, 0 prompts, extensions linked: yes)
 
 Standalone agents:
+  talk              (in-situ, extensions: 0)
   twenty-questions  (in-situ, extensions: 1)
+  websearch         (in-situ, extensions: 2)
 ```

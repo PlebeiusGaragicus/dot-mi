@@ -13,9 +13,9 @@ The orchestrator has restricted tools (`read,find,ls,grep` via `team-prompt.md` 
 | Field | Value |
 |-------|-------|
 | Tools | bash, read, ls |
-| Skills | searxng |
+| Skills | tavily |
 
-Searches the web via SearXNG for high-quality sources on a research topic. Returns a numbered list of URLs with titles and relevance notes. Formulates multiple search queries to cover different angles.
+Searches the web via the Tavily API for high-quality sources on a research topic. Returns a numbered list of URLs with titles and relevance notes. Formulates multiple search queries to cover different angles.
 
 ### collector
 

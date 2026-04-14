@@ -343,6 +343,18 @@ Be thorough but organized. Use headings and bullet points. Cite specific files a
     set -- --mode json "$@"
   fi
 
+  # Load default CLI flags from pi-args if present.
+  # One flag (or flag + value) per line. Lines starting with # are comments.
+  if [ -f "$config_dir/pi-args" ]; then
+    local _pi_args=()
+    while IFS= read -r _line; do
+      [[ -n "$_line" && "$_line" != \#* ]] && _pi_args+=($_line)
+    done < "$config_dir/pi-args"
+    if [ ${#_pi_args[@]} -gt 0 ]; then
+      set -- "${_pi_args[@]}" "$@"
+    fi
+  fi
+
   # Dispatch: workspace or in-situ
   if [ -f "$config_dir/workspace.conf" ]; then
     if [ "$_batch" = true ]; then

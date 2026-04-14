@@ -1,4 +1,9 @@
-WEEEBBB SEARCH!!!                       
+            _                        _    
+__ __ _____| |__ ___ ___ __ _ _ _ __| |_  
+\ V  V / -_) '_ (_-</ -_) _` | '_/ _| ' \ 
+ \_/\_/\___|_.__/__/\___\__,_|_| \__|_||_|
+                                          
 ---
-Searches the web for your dumb questions.
-Usage:  p websearch "what is the capital of France?"
+Web search via the Tavily API (websearch tool). Set TAVILY_API_KEY in your environment.
+
+Usage: p websearch "your question"

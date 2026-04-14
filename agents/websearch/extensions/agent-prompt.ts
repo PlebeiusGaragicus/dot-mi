@@ -1,0 +1,1 @@
+../../../shared/extensions/agent-prompt.ts

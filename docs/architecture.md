@@ -101,12 +101,12 @@ graph TD
 
 ```mermaid
 graph TD
-  SUser["User runs: p twenty-questions 'Let's play'"]
-  SAlias["p sets<br/>PI_CODING_AGENT_DIR=~/dot-mi/agents/twenty-questions"]
-  SPiMain["pi process starts"]
-  SExtLoad["Loads custom extension<br/>shows welcome overlay"]
-  SHook["before_agent_start hook<br/>injects game rules into system prompt"]
-  SLLM["LLM processes with<br/>injected system prompt"]
+  SUser["User runs: p talk or p websearch ..."]
+  SAlias["p reads pi-args, sets<br/>PI_CODING_AGENT_DIR=~/dot-mi/agents/name"]
+  SPiMain["pi process starts<br/>discovers SYSTEM.md / APPEND_SYSTEM.md"]
+  SExtLoad["Loads extensions<br/>agent-prompt.ts reads AGENT.md"]
+  SHook["session_start: apply tools/model<br/>before_agent_start: append prompt body"]
+  SLLM["LLM processes with<br/>configured system prompt and tools"]
 
   SUser --> SAlias --> SPiMain --> SExtLoad --> SHook --> SLLM
 ```
