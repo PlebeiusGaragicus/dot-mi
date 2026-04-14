@@ -1,0 +1,4 @@
+WEEEBBB SEARCH!!!                       
+---
+Searches the web for your dumb questions.
+Usage:  p websearch "what is the capital of France?"
