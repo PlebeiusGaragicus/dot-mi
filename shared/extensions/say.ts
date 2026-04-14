@@ -7,10 +7,11 @@
  * - Replaces URLs with "URL redacted"; strips Markdown `*` and `#` so `say` does not read them aloud.
  * - Only runs when `ctx.hasUI` (interactive TUI).
  * - Speech rate: `say -r` (words per minute), see SAY_RATE_WPM.
+ * - A new utterance or a new user prompt cancels any in-flight `say` (no overlapping speech).
  */
 
 import type { ExtensionAPI } from "@mariozechner/pi-coding-agent";
-import { spawn } from "node:child_process";
+import { type ChildProcess, spawn } from "node:child_process";
 
 const URL_REDACTED = "URL redacted";
 const MAX_CHARS = 32_000;
@@ -19,6 +20,20 @@ const SAY_RATE_WPM = 320;
 
 /** In-memory; initialized from `--tts-enable` on startup/reload, then `/tts-toggle` */
 let autoTtsEnabled = false;
+
+let currentSay: ChildProcess | null = null;
+
+function stopSay(): void {
+	const c = currentSay;
+	if (!c) return;
+	currentSay = null;
+	try {
+		c.stdin?.destroy();
+		c.kill("SIGTERM");
+	} catch {
+		/* ignore — process may already be dead */
+	}
+}
 
 /** http(s) URLs and bare www.… tokens */
 function redactUrlsForSpeech(text: string): string {
@@ -69,10 +84,20 @@ function getLastAssistantSpeechTextFromSession(entries: unknown[]): string | nul
 }
 
 function speakDarwin(text: string): void {
+	stopSay();
+
 	const args: string[] = ["-r", String(SAY_RATE_WPM)];
 	const child = spawn("say", args, {
 		stdio: ["pipe", "ignore", "ignore"],
 	});
+	currentSay = child;
+
+	const clearIfCurrent = (): void => {
+		if (currentSay === child) currentSay = null;
+	};
+	child.on("exit", clearIfCurrent);
+	child.on("error", clearIfCurrent);
+
 	child.stdin.write(text, "utf8");
 	child.stdin.end();
 	child.unref();
@@ -88,6 +113,10 @@ export default function (pi: ExtensionAPI) {
 	pi.on("session_start", async (event) => {
 		if (event.reason !== "startup" && event.reason !== "reload") return;
 		autoTtsEnabled = pi.getFlag("tts-enable") === true;
+	});
+
+	pi.on("before_agent_start", async () => {
+		stopSay();
 	});
 
 	pi.on("agent_end", async (event, ctx) => {
