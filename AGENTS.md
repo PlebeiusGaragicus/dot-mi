@@ -21,7 +21,7 @@ dot-mi/
 ├── AGENTS.md                 # This file
 ├── README.md                 # Human-facing overview
 ├── setup.sh                  # Scaffold teams and agents
-├── bash_aliases              # Shell functions (source in .zshrc/.bashrc)
+├── bash_aliases              # Shell functions: `p` command (source in .zshrc/.bashrc)
 ├── example.env               # API key template (copy to .env)
 ├── mkdocs.yml                # MkDocs config for docs site
 │
@@ -199,7 +199,7 @@ Skills live in `shared/skills/` and are symlinked per-skill into each team/agent
 
 ### Workspace Agents
 
-Any team or standalone agent can run as a **workspace agent** by adding a `workspace.conf` file to its directory. When present, the auto-generated alias launches pi in a fresh dated directory (`workspaces/<name>/<timestamp>/`) inside a subshell, so the user's shell stays in its original directory after pi exits.
+Any team or standalone agent can run as a **workspace agent** by adding a `workspace.conf` file to its directory. When present, `p <name>` launches pi in a fresh dated directory (`workspaces/<name>/<timestamp>/`) inside a subshell, so the user's shell stays in its original directory after pi exits.
 
 **`workspace.conf` format**: one subdirectory name per line. Lines starting with `#` are comments. Each listed directory is pre-created in the workspace before pi starts.
 
@@ -218,11 +218,11 @@ sessions
 ./setup.sh create-agent --workspace my-scraper
 ```
 
-**Resuming a workspace session**: Workspace aliases support `--resume` and `--list`:
+**Resuming a workspace session**: Workspace teams support `--resume` and `--list`:
 ```bash
-pi-deepresearch --list                      # show existing workspaces
-pi-deepresearch --resume                    # resume most recent workspace
-pi-deepresearch --resume 2026-04-10         # resume workspace matching prefix
+p deepresearch --list                       # show existing workspaces
+p deepresearch --resume                     # resume most recent workspace
+p deepresearch --resume 2026-04-10          # resume workspace matching prefix
 ```
 `--resume` cd's into the existing workspace directory and passes `--resume` to pi, so the session selector opens with the original session available. `--list` shows each workspace with a file count.
 
@@ -309,7 +309,7 @@ Then: edit `agents/<name>/extensions/<name>/index.ts` for custom behavior.
 | `*/workspace.conf` | Yes | Workspace subdirectory list (presence marks workspace mode) |
 | `agents/*/extensions/**/*.ts` | Yes | Custom agent extensions |
 | `setup.sh` | Yes | Team/agent scaffolding |
-| `bash_aliases` | Yes | Shell aliases |
+| `bash_aliases` | Yes | Shell functions: `p` command |
 | `docs/**/*.md` | Yes | MkDocs documentation |
 | `teams/*/extensions/*` | **No** | Symlinks — edit `shared/extensions/` instead |
 | `teams/*/skills/*` | **No** | Symlinks — edit `shared/skills/` instead |

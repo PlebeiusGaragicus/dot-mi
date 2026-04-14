@@ -37,10 +37,10 @@ Iterative implementation workflow:
 ## Usage
 
 ```bash
-# Via alias
-pi-impl "Fix the login bug in auth.ts"
+# Via p
+p impl "Fix the login bug in auth.ts"
 
 # With the workflow prompt
-pi-impl
+p impl
 > /implement-and-review refactor the database connection pool
 ```

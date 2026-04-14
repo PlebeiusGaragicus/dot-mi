@@ -7,4 +7,4 @@
 Reconnaissance & planning team for codebase exploration.
 
 Agents: recon-scout (fast exploration), recon-planner (deep analysis)
-Usage:  pi-recon "explore the auth module"
+Usage:  p recon "explore the auth module"

@@ -60,10 +60,10 @@ Iterative writing workflow (skips research):
 ## Usage
 
 ```bash
-# Via alias
-pi-blog "Write a post about our migration to TypeScript"
+# Via p
+p blog "Write a post about our migration to TypeScript"
 
 # With research workflow
-pi-blog
+p blog
 > /research-write-edit the architecture of this project
 ```

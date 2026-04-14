@@ -16,7 +16,7 @@ You're dropped into an unfamiliar project and need to understand it fast.
 
 ```bash
 cd ~/projects/some-api
-pi-recon "Map the authentication flow -- which files handle login, session management, and token refresh?"
+p recon "Map the authentication flow -- which files handle login, session management, and token refresh?"
 ```
 
 **What happens:** pi starts with only the recon team's agents (scout, planner) visible. The LLM can use the `subagent` tool to delegate to either agent. A typical flow:
@@ -30,7 +30,7 @@ pi-recon "Map the authentication flow -- which files handle login, session manag
 If you want the scout-plan chain in one shot:
 
 ```bash
-pi-recon
+p recon
 > /implement add rate limiting to the /api/login endpoint
 ```
 
@@ -47,7 +47,7 @@ You know what needs to change and want the work done with a review pass.
 
 ```bash
 cd ~/projects/some-api
-pi-impl
+p impl
 > /implement-and-review add input validation to all POST endpoints in src/routes/
 ```
 
@@ -60,7 +60,7 @@ This triggers:
 Or skip the prompt template and just talk to the team directly:
 
 ```bash
-pi-impl "Fix the race condition in src/queue/processor.ts -- the dequeue and ack aren't atomic"
+p impl "Fix the race condition in src/queue/processor.ts -- the dequeue and ack aren't atomic"
 ```
 
 The LLM decides how to use the available agents. It might send the task straight to worker, or ask reviewer to inspect the area first.
@@ -71,7 +71,7 @@ You want to write a technical blog post about a project you're working on.
 
 ```bash
 cd ~/projects/my-cool-library
-pi-blog
+p blog
 > /research-write-edit how this library's plugin system works and why we chose that architecture
 ```
 
@@ -84,7 +84,7 @@ This chains three agents:
 For a quicker loop when you already know the material:
 
 ```bash
-pi-blog
+p blog
 > /write-and-edit 5 practical tips for writing maintainable TypeScript
 ```
 
@@ -95,10 +95,10 @@ This skips research and goes straight to write-review-revise.
 Workspace teams launch in a fresh dated directory so artifacts stay isolated.
 
 ```bash
-pi-deepresearch "What are the latest developments in WebTransport protocol?"
+p deepresearch "What are the latest developments in WebTransport protocol?"
 ```
 
-**What happens:** The alias creates `workspaces/deepresearch/<timestamp>/` with `sources/`, `screenshots/`, `drafts/`, and `sessions/` subdirectories, then launches pi inside it. The orchestrator's tools are restricted to `read,find,ls,grep` via `team-prompt.md` frontmatter, so it cannot curl or bash its way through -- it must delegate all work to subagents. Both the orchestrator and all subagent sessions are stored in `sessions/` for unified trajectory analysis. The orchestrator runs a four-step pipeline:
+**What happens:** `p` creates `workspaces/deepresearch/<timestamp>/` with `sources/`, `screenshots/`, `drafts/`, and `sessions/` subdirectories, then launches pi inside it. The orchestrator's tools are restricted to `read,find,ls,grep` via `team-prompt.md` frontmatter, so it cannot curl or bash its way through -- it must delegate all work to subagents. Both the orchestrator and all subagent sessions are stored in `sessions/` for unified trajectory analysis. The orchestrator runs a four-step pipeline:
 
 1. **scout** searches SearXNG for relevant sources
 2. **collector** (parallel, one per URL) fetches each page via headless browser, strips boilerplate, saves to `sources/`
@@ -110,7 +110,7 @@ pi-deepresearch "What are the latest developments in WebTransport protocol?"
 Each run creates a new workspace. To see past runs:
 
 ```bash
-pi-deepresearch --list
+p deepresearch --list
 ```
 
 ```
@@ -122,13 +122,13 @@ Workspaces for deepresearch:
 To resume the most recent workspace session:
 
 ```bash
-pi-deepresearch --resume
+p deepresearch --resume
 ```
 
 Or resume a specific one by prefix:
 
 ```bash
-pi-deepresearch --resume 2026-04-10-125602
+p deepresearch --resume 2026-04-10-125602
 ```
 
 This cd's into the original workspace directory (so all files are present) and opens pi's session selector.
@@ -158,7 +158,7 @@ After running a workspace team, use the retro team to analyze session traces and
 
 ```bash
 cd workspaces/deepresearch/2026-04-12-150258
-pi-retro
+p retro
 ```
 
 ### Non-interactive use (`run-retro`)
@@ -186,7 +186,7 @@ The retro report is designed to be concise and structured -- ideal input for a p
 
 ```bash
 # After retro writes retrospective-report.md, feed it to a stronger model
-pi-recon "Read retrospective-report.md and suggest specific prompt or code fixes for each issue"
+p recon "Read retrospective-report.md and suggest specific prompt or code fixes for each issue"
 ```
 
 This two-step pattern keeps costs low: the bulk parsing runs for free on an open-source model, and only the compact report goes to a frontier model.
@@ -197,28 +197,28 @@ You don't always need prompt templates. Just describe what you want:
 
 ```bash
 # Quick recon question
-pi-recon "What ORM does this project use and how are migrations handled?"
+p recon "What ORM does this project use and how are migrations handled?"
 
 # Direct implementation
-pi-impl "Rename the User model to Account everywhere"
+p impl "Rename the User model to Account everywhere"
 
 # Blog with specific instructions
-pi-blog "Write a short post comparing our REST and GraphQL endpoints, keep it under 600 words"
+p blog "Write a short post comparing our REST and GraphQL endpoints, keep it under 600 words"
 ```
 
 The LLM sees the team's agents and decides whether to delegate via subagent or handle the task directly.
 
-## 7. Standalone Bots (No Teams)
+## 7. Built-in Bots (No Teams)
 
 For quick tasks that don't need team orchestration:
 
 ```bash
 # General-purpose chatbot (read-only tools, no subagent extension)
-pchat "Explain the difference between OAuth 2.0 and OIDC"
+p chat "Explain the difference between OAuth 2.0 and OIDC"
 
 # Codebase explainer (read-only, produces structured reports)
 cd ~/projects/some-api
-pexplain "How does the caching layer work?"
+p explain "How does the caching layer work?"
 ```
 
 These don't use `PI_CODING_AGENT_DIR` at all -- they pass flags directly to pi and use `~/.pi` as the config root.
@@ -260,12 +260,12 @@ EOF
 
 The `no-skills: true` + `skills: skills/searxng` combination means this agent loads only the searxng skill, ignoring any others in the team's `skills/` directory. Omit both fields to load all team skills, or set only `no-skills: true` to load none.
 
-Re-source aliases and use it -- the `pi-docs-team` alias is auto-generated from the directory name:
+Re-source aliases and use it -- `p` discovers teams by directory name:
 
 ```bash
 source ~/dot-mi/bash_aliases
 cd ~/projects/my-api
-pi-docs-team "Write API reference docs for all endpoints in src/routes/"
+p docs-team "Write API reference docs for all endpoints in src/routes/"
 ```
 
 ## 9. Sharing Auth Across Teams
@@ -274,7 +274,7 @@ Each team has its own config root, including API authentication. After you authe
 
 ```bash
 # Authenticate via the recon team
-pi-recon
+p recon
 # (pi prompts for API key on first run, saves to teams/recon/auth.json)
 
 # Share that auth with other teams

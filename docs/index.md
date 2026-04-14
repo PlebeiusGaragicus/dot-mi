@@ -6,7 +6,7 @@ Custom [pi](https://github.com/PlebeiusGaragicus/pi-mono) agent teams as dotfile
 
 dot-mi is a dotfiles-style repository for managing multiple **pi coding agent** configurations. Instead of cluttering `~/.pi/` with extensions, agents, and prompts, this repo defines self-contained **team directories** and **standalone agent directories** -- each with its own extensions, skills, and session history.
 
-A bash alias sets `PI_CODING_AGENT_DIR` to the right directory, and you get a fully isolated pi agent configuration from any working directory.
+The `p` command sets `PI_CODING_AGENT_DIR` to the right directory, and you get a fully isolated pi agent configuration from any working directory.
 
 ## Quick Start
 
@@ -14,7 +14,7 @@ A bash alias sets `PI_CODING_AGENT_DIR` to the right directory, and you get a fu
 # Clone the repo
 git clone git@github.com:PlebeiusGaragicus/dot-mi.git ~/dot-mi
 
-# Source the aliases
+# Source bash_aliases (defines `p`)
 echo 'source ~/dot-mi/bash_aliases' >> ~/.zshrc
 source ~/dot-mi/bash_aliases
 
@@ -24,8 +24,8 @@ cp ~/dot-mi/example.env ~/dot-mi/.env
 
 # Use a team
 cd /any/project
-pi-recon "Find all authentication code"
-pi-blog "Write a post about this project's architecture"
+p recon "Find all authentication code"
+p blog "Write a post about this project's architecture"
 ```
 
 ## Teams
@@ -44,4 +44,4 @@ Standalone agents are single-purpose configurations with custom extensions inste
 ./setup.sh create-agent my-agent                 # new standalone agent
 ```
 
-All configurations are invokable via auto-generated `pi-<name>` functions after re-sourcing `bash_aliases`. Workspace agents (those with a `workspace.conf` file) launch in a fresh dated directory under `workspaces/` and support `--list` and `--resume`. See the [Usage Guide](usage.md) for details.
+All configurations are invokable via `p <name>` after re-sourcing `bash_aliases`. Workspace agents (those with a `workspace.conf` file) launch in a fresh dated directory under `workspaces/` and support `--list` and `--resume`. See the [Usage Guide](usage.md) for details.

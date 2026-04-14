@@ -63,8 +63,8 @@ dot-mi/
 
 ```mermaid
 graph TD
-  User["User runs: pi-recon 'find auth code'"]
-  Alias["bash alias sets<br/>PI_CODING_AGENT_DIR=~/dot-mi/teams/recon"]
+  User["User runs: p recon 'find auth code'"]
+  Alias["p sets<br/>PI_CODING_AGENT_DIR=~/dot-mi/teams/recon"]
   PiMain["pi process starts"]
   ExtLoad["Loads extensions from<br/>teams/recon/extensions/"]
   AgentDiscover["Discovers agents from<br/>teams/recon/agents/"]
@@ -83,8 +83,8 @@ graph TD
 
 ```mermaid
 graph TD
-  WUser["User runs: pi-deepresearch 'topic'"]
-  WAlias["bash alias calls<br/>_dotmi_workspace_launch"]
+  WUser["User runs: p deepresearch 'topic'"]
+  WAlias["p calls<br/>_dotmi_workspace_launch"]
   WDir["Creates dated workspace<br/>workspaces/deepresearch/timestamp/"]
   WPi["pi starts"]
   WFrontmatter["subagent-teams extension parses<br/>team-prompt.md frontmatter<br/>(sets tools, model, header)"]
@@ -101,8 +101,8 @@ graph TD
 
 ```mermaid
 graph TD
-  SUser["User runs: pi-twenty-questions 'Let's play'"]
-  SAlias["bash alias sets<br/>PI_CODING_AGENT_DIR=~/dot-mi/agents/twenty-questions"]
+  SUser["User runs: p twenty-questions 'Let's play'"]
+  SAlias["p sets<br/>PI_CODING_AGENT_DIR=~/dot-mi/agents/twenty-questions"]
   SPiMain["pi process starts"]
   SExtLoad["Loads custom extension<br/>shows welcome overlay"]
   SHook["before_agent_start hook<br/>injects game rules into system prompt"]

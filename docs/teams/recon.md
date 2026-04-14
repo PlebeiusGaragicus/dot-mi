@@ -36,8 +36,8 @@ Full implementation workflow:
 ## Usage
 
 ```bash
-# Via alias
-pi-recon "Find all authentication code and map the auth flow"
+# Via p
+p recon "Find all authentication code and map the auth flow"
 
 # Direct invocation
 PI_CODING_AGENT_DIR=~/dot-mi/teams/recon pi "Map the database schema"

@@ -81,11 +81,11 @@ export default function (pi: ExtensionAPI) {
 
 ### Running the Agent
 
-After sourcing `bash_aliases`, a `pi-<name>` alias is auto-generated:
+After sourcing `bash_aliases`, run standalone agents with `p <name>`:
 
 ```bash
 source ~/dot-mi/bash_aliases
-pi-my-agent "hello"
+p my-agent "hello"
 ```
 
 Or set the environment variable directly:
@@ -111,7 +111,7 @@ Extension: `agents/twenty-questions/extensions/twenty-questions/index.ts`
 ### Running It
 
 ```bash
-pi-twenty-questions
+p twenty-questions
 ```
 
 The extension displays the welcome box on startup. Say "I'm ready" to begin the game.

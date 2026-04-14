@@ -1,7 +1,7 @@
 #!/bin/bash
 # Serial evaluation runner for workspace agent teams.
 # Reads one prompt per line from a prompts file, runs each through
-# pi-<team> -p "..." (non-interactive mode), and logs results to a
+# p <team> -p "..." (non-interactive mode), and logs results to a
 # JSONL manifest for later trajectory analysis.
 #
 # Usage:
@@ -70,7 +70,7 @@ while IFS= read -r prompt || [ -n "$prompt" ]; do
 
   start=$(date +%s)
   exit_code=0
-  "pi-$TEAM" -p "$prompt" < /dev/null \
+  p "$TEAM" -p "$prompt" < /dev/null \
     > "$RESULTS_DIR/prompt-${prompt_num}-output.txt" 2>&1 \
     || exit_code=$?
   duration=$(( $(date +%s) - start ))
