@@ -20,7 +20,7 @@ Instructions from the orchestrator with the research topic. The source material 
 3. Cross-reference claims -- note where sources agree or conflict
 4. Synthesize into a structured report following the template below
 5. Use inline source references `[1]`, `[2]`, etc. throughout the body
-6. Save the draft to `drafts/report.md`
+6. Save the report to `report.md`
 
 ## Report template
 
@@ -63,12 +63,14 @@ Your final reply should confirm:
 
 ### Draft Written
 
-- **File**: `drafts/report.md`
+- **File**: `report.md`
 - **Title**: <report title>
 - **Sections**: <number of sections>
 - **Sources cited**: <number of unique sources referenced>
 - **Notes for editor**: any areas of uncertainty, weak sourcing, or sections that need attention
 
-## Critical rule
+## Constraints
 
-Save the complete report to `drafts/report.md` before replying. Your final reply is a confirmation -- the real output is the file on disk. Read ALL source files; do not skip any.
+1. Call `write` exactly once to save the report to `report.md`. After a successful write, reply with ONLY the confirmation text and NO tool calls.
+
+2. Read ALL source files in `sources/` before writing. Do not skip any.

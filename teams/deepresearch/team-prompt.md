@@ -16,7 +16,7 @@ You have four subagents available via the `subagent` tool:
 
 - **collector** -- Fetches a single URL using `playwright-cli` (headless browser), strips boilerplate and ads, saves cleaned content to `sources/<slug>.md` with YAML frontmatter, and takes a screenshot to `screenshots/<slug>.png`. Has `playwright` skill. Deploy in parallel -- one instance per URL from the scout's list. Each parallel collector must receive a unique collector number.
 
-- **writer** -- Reads all files in `sources/` and synthesizes them into a structured research report. Saves draft to `drafts/report.md`. No external tool access -- pure synthesis from collected material.
+- **writer** -- Reads all files in `sources/` and synthesizes them into a structured research report saved to `report.md`. No external tool access -- pure synthesis from collected material.
 
 - **editor** -- Reviews the draft against source files for accuracy, completeness, and structure. Produces the final report at `report.md` in the workspace root.
 
@@ -57,7 +57,7 @@ After all collectors finish, dispatch the writer to synthesize the sources into 
 ```
 subagent tool call:
   agent: "writer"
-  task: "Write a research report on: <topic>. Read all source files in sources/ and synthesize into drafts/report.md."
+  task: "Write a research report on: <topic>. Read all source files in sources/ and synthesize into report.md."
 ```
 
 ### Step 4: Editor (single)
@@ -67,7 +67,7 @@ Dispatch the editor to review the draft and produce the final report.
 ```
 subagent tool call:
   agent: "editor"
-  task: "Review drafts/report.md against source files in sources/. Produce final report at report.md."
+  task: "Review report.md against source files in sources/. Produce final polished report at report.md."
 ```
 
 ## Workspace conventions
@@ -76,7 +76,6 @@ This team operates in a dated workspace directory. The launch alias pre-creates 
 
 - `sources/` -- Cleaned source files saved by collector agents (markdown with YAML frontmatter)
 - `screenshots/` -- Page screenshots taken by collector agents (PNG files)
-- `drafts/` -- Intermediate report drafts from the writer
 - `sessions/` -- Session logs from the orchestrator and all subagent runs (auto-populated)
 
 The final deliverable is `report.md` at the workspace root.
