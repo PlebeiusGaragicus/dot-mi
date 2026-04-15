@@ -27,6 +27,12 @@ _dotmi_pi() {
 	PI_SKIP_VERSION_CHECK=1 PI_OFFLINE=1 command pi "$@"
 }
 
+# ── session explorer (Pi JSONL + pi-web-ui) ─────────────────────────────────
+# Dev: Vite + API on 127.0.0.1. Prod: npm run build && npm run start (see tools/session-explorer/README.md).
+p_sessions() {
+	( cd "$DOT_MI_DIR/tools/session-explorer" && npm run dev )
+}
+
 # ── workspace launcher ───────────────────────────────────────────────────────
 #
 # Used by `p` when a team/agent has a workspace.conf file.

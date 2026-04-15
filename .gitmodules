@@ -5,3 +5,7 @@
 [submodule "references/qmd"]
 	path = references/qmd
 	url = https://github.com/tobi/qmd
+[submodule "references/plannotator"]
+	path = references/plannotator
+	url = https://github.com/PlebeiusGaragicus/plannotator.git
+	branch = main
