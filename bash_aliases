@@ -224,9 +224,28 @@ _dotmi_has_flag() {
   return 1
 }
 
+# Lists teams and standalone agents (name, kind, mode) on stderr, sorted by name.
+# kind: team | agent — mode: workspace (has workspace.conf) | in-situ
+# Uses find (not glob + shopt) so this works when bash_aliases is sourced from zsh.
 _dotmi_list_available() {
   echo "Available:" >&2
-  (cd "$DOT_MI_DIR" && ls -d teams/*/ agents/*/ 2>/dev/null | sed 's|.*/\(.*\)/|  \1|')
+  printf '  %-20s  %-8s  %s\n' "name" "kind" "mode" >&2
+  {
+    find "$DOT_MI_DIR/teams" -mindepth 1 -maxdepth 1 -type d 2>/dev/null | sort | while IFS= read -r d; do
+      [ -n "$d" ] || continue
+      name=$(basename "$d")
+      mode=$([ -f "$d/workspace.conf" ] && echo workspace || echo in-situ)
+      printf '%s\tteam\t%s\n' "$name" "$mode"
+    done
+    find "$DOT_MI_DIR/agents" -mindepth 1 -maxdepth 1 -type d 2>/dev/null | sort | while IFS= read -r d; do
+      [ -n "$d" ] || continue
+      name=$(basename "$d")
+      mode=$([ -f "$d/workspace.conf" ] && echo workspace || echo in-situ)
+      printf '%s\tagent\t%s\n' "$name" "$mode"
+    done
+  } | sort -t $'\t' -k1,1 | while IFS=$'\t' read -r name kind mode; do
+    printf '  %-20s  %-8s  %s\n' "$name" "$kind" "$mode" >&2
+  done
 }
 
 # ── batch mode filter ────────────────────────────────────────────────────────

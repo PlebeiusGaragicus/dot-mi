@@ -1,6 +1,6 @@
 # p command
 
-`p` is the unified entry point for all teams and standalone agents.
+`p` is the unified entry point for all teams and standalone agents. Run `p` with no arguments to print a table of names with `kind` (team vs agent) and `mode` (workspace vs in-situ).
 
 ```sh
 # interactive (tty)
