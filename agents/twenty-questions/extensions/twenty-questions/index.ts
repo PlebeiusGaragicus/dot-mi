@@ -1,72 +1,99 @@
 /**
  * Twenty Questions Extension
  *
- * Demonstrates two extension capabilities:
- *   1. Writing to stdout at extension load time (before user input)
- *   2. System prompt injection via the before_agent_start hook
- *
- * Shows a styled welcome box when pi starts, then injects
- * game rules into the system prompt so the agent plays 20 questions.
+ * Game rules and tool policy live in SYSTEM.md and pi-args.
+ * TUI: banner.txt (figlet + usage) and a bordered welcome box with dice emoji,
+ * plus title bar and footer hints.
  */
 
-import type { ExtensionAPI } from "@mariozechner/pi-coding-agent";
+import type { ExtensionAPI, Theme } from "@mariozechner/pi-coding-agent";
+import { getAgentDir } from "@mariozechner/pi-coding-agent";
+import { truncateToWidth, visibleWidth } from "@mariozechner/pi-tui";
+import * as fs from "node:fs";
+import * as path from "node:path";
 
-const BORDER_COLOR = "\x1b[36m";
-const TITLE_COLOR = "\x1b[1;33m";
-const DIM = "\x1b[2m";
-const RESET = "\x1b[0m";
+const FOOTER_LEFT = " Yes/no only";
+const FOOTER_RIGHT = "Say when you are ready to start ";
 
-const GAME_RULES = `# 20 Questions
+function readBannerParts(agentDir: string): { art: string; usage: string } | null {
+	const bannerPath = path.join(agentDir, "banner.txt");
+	if (!fs.existsSync(bannerPath)) return null;
+	const raw = fs.readFileSync(bannerPath, "utf-8").trimEnd();
+	if (!raw) return null;
+	const sepIndex = raw.search(/^---$/m);
+	const art = sepIndex !== -1 ? raw.slice(0, sepIndex).trimEnd() : raw;
+	const usage = sepIndex !== -1 ? raw.slice(sepIndex + 3).trim() : "";
+	return { art, usage };
+}
 
-You are playing a game of 20 questions. The user is thinking of something and you must guess what it is.
+function bannerLines(theme: Theme, parts: { art: string; usage: string }): string[] {
+	const out: string[] = [];
+	for (const line of parts.art.split("\n")) {
+		out.push(theme.bold(theme.fg("accent", line)));
+	}
+	if (parts.usage) {
+		for (const line of parts.usage.split("\n")) {
+			out.push(theme.fg("dim", line));
+		}
+	}
+	return out;
+}
 
-## Rules
+function welcomeBoxLines(theme: Theme, contentInner: number): string[] {
+	const b = (c: string) => theme.fg("accent", c);
+	const bar = b("─".repeat(contentInner + 2));
+	const top = b("\u256D") + bar + b("\u256E");
+	const bottom = b("\u2570") + bar + b("\u256F");
 
-1. Ask exactly one yes-or-no question at a time.
-2. Wait for the user's answer before asking the next question.
-3. Keep a running count: display "Question N/20" before each question.
-4. Use deductive reasoning -- narrow the category first, then get specific.
-5. You may make a guess at any time instead of asking a question (it still counts as one of your 20).
-6. After 20 questions, you must make a final guess.
+	function row(inner: string): string {
+		const pad = Math.max(0, contentInner - visibleWidth(inner));
+		return b("│") + " " + inner + " ".repeat(pad) + " " + b("│");
+	}
 
-## Strategy
-
-- Start broad: "Is it a living thing?" / "Is it something physical?"
-- Eliminate large categories early before drilling into specifics.
-
-## Start
-
-When the user says they are ready, think of a good opening question and begin.`;
-
-function drawBox(lines: string[], width: number): string {
-	const top = `${BORDER_COLOR}╭${"─".repeat(width - 2)}╮${RESET}`;
-	const bottom = `${BORDER_COLOR}╰${"─".repeat(width - 2)}╯${RESET}`;
-	const padded = lines.map((line) => {
-		const raw = line.replace(/\x1b\[[0-9;]*m/g, "");
-		const pad = Math.max(0, width - 4 - raw.length);
-		return `${BORDER_COLOR}│${RESET} ${line}${" ".repeat(pad)} ${BORDER_COLOR}│${RESET}`;
-	});
-	return [top, ...padded, bottom].join("\n");
+	const title = theme.bold(theme.fg("warning", "\u{1F3B2}  20 Questions"));
+	return [
+		top,
+		row(title),
+		row(""),
+		row(theme.fg("dim", "Think of something — anything at all.")),
+		row(theme.fg("dim", "The agent will ask yes/no questions to guess it.")),
+		row(""),
+		row(theme.fg("muted", 'Say "I\'m ready" to start the game.')),
+		bottom,
+	];
 }
 
 export default function (pi: ExtensionAPI) {
-	if (process.stdout.isTTY) {
-		const width = Math.min(process.stdout.columns || 60, 60);
-		const box = drawBox(
-			[
-				`${TITLE_COLOR}🎲  20 Questions${RESET}`,
-				"",
-				"Think of something -- anything at all.",
-				"The agent will ask yes/no questions to guess it.",
-				"",
-				`${DIM}Say "I'm ready" to start the game.${RESET}`,
-			],
-			width,
-		);
-		process.stdout.write(`\n${box}\n\n`);
-	}
+	pi.on("session_start", async (_event, ctx) => {
+		if (!ctx.hasUI) return;
 
-	pi.on("before_agent_start", async (event) => {
-		return { systemPrompt: event.systemPrompt + "\n\n" + GAME_RULES };
+		const agentDir = getAgentDir();
+		const banner = readBannerParts(agentDir);
+
+		setTimeout(() => ctx.ui.setTitle("π - 20 Questions"), 150);
+
+		ctx.ui.setHeader((_tui, theme) => ({
+			invalidate() {},
+			render(width: number): string[] {
+				const contentInner = Math.max(28, Math.min(52, width - 8));
+				const lines: string[] = [];
+				if (banner) {
+					lines.push(...bannerLines(theme, banner), "");
+				}
+				lines.push(...welcomeBoxLines(theme, contentInner));
+				return lines;
+			},
+		}));
+
+		ctx.ui.setFooter((_tui, theme, _footerData) => ({
+			dispose: () => {},
+			invalidate() {},
+			render(width: number): string[] {
+				const left = theme.fg("dim", FOOTER_LEFT);
+				const right = theme.fg("dim", FOOTER_RIGHT);
+				const pad = " ".repeat(Math.max(1, width - visibleWidth(left) - visibleWidth(right)));
+				return [truncateToWidth(left + pad + right, width)];
+			},
+		}));
 	});
 }

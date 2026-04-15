@@ -12,7 +12,7 @@
 # DOT_MI_DIR is auto-detected from this script's location.
 # Override by setting DOT_MI_DIR before sourcing.
 
-# disable version telemetry
+# disable version telemetry (shell-local; export in your profile if you want it on bare `pi`)
 PI_TELEMETRY=0
 
 # auto-detect DOT_MI_DIR from this script's location
@@ -20,6 +20,12 @@ DOT_MI_DIR="${DOT_MI_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" && pwd)}"
 
 # Load API keys if present
 [ -f "$DOT_MI_DIR/.env" ] && source "$DOT_MI_DIR/.env"
+
+# pi when launched through `p` / workspace helpers only — skips npm + extension update toasts.
+# Plain `pi` in your shell is unchanged unless you export these yourself.
+_dotmi_pi() {
+	PI_SKIP_VERSION_CHECK=1 PI_OFFLINE=1 command pi "$@"
+}
 
 # ── workspace launcher ───────────────────────────────────────────────────────
 #
@@ -73,7 +79,7 @@ _dotmi_workspace_launch() {
     echo "Resuming: $target" >&2
     local _resume_args=()
     [ -d "$target/sessions" ] && _resume_args+=(--session-dir "$target/sessions")
-    (cd "$target" && PI_CODING_AGENT_DIR="$config_dir" pi "${_resume_args[@]}" --resume "$@")
+    (cd "$target" && PI_CODING_AGENT_DIR="$config_dir" _dotmi_pi "${_resume_args[@]}" --resume "$@")
     return $?
   fi
 
@@ -86,7 +92,7 @@ _dotmi_workspace_launch() {
   echo "Workspace: $ws" >&2
   local _launch_args=()
   [ -d "$ws/sessions" ] && _launch_args+=(--session-dir "$ws/sessions")
-  (cd "$ws" && PI_CODING_AGENT_DIR="$config_dir" pi "${_launch_args[@]}" "$@")
+  (cd "$ws" && PI_CODING_AGENT_DIR="$config_dir" _dotmi_pi "${_launch_args[@]}" "$@")
   return $?
 }
 
@@ -358,10 +364,10 @@ p() {
     fi
   else
     if [ "$_batch" = true ]; then
-      PI_CODING_AGENT_DIR="$config_dir" pi "$@" | _dotmi_json_filter
+      PI_CODING_AGENT_DIR="$config_dir" _dotmi_pi "$@" | _dotmi_json_filter
       return ${PIPESTATUS[0]:-${pipestatus[1]:-$?}}
     else
-      PI_CODING_AGENT_DIR="$config_dir" pi "$@"
+      PI_CODING_AGENT_DIR="$config_dir" _dotmi_pi "$@"
       return $?
     fi
   fi
