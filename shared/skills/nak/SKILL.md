@@ -11,7 +11,7 @@ Use the `bash` tool to run `nak` commands. It is already installed at `/opt/home
 ## Query Events from Relays
 
 ```bash
-nak req -k 1 -l 5 wss://relay.damus.io
+nak req -k 1 -l 5 wss://relay.abvstudio.net
 ```
 
 Key flags for `nak req`:
@@ -25,7 +25,7 @@ Key flags for `nak req`:
 Pipe through `jq` for readable output:
 
 ```bash
-nak req -k 1 -a npub1... -l 3 wss://relay.damus.io | jq '{content, created_at}'
+nak req -k 1 -a npub1... -l 3 wss://relay.abvstudio.net | jq '{content, created_at}'
 ```
 
 ## Fetch by NIP-19 Code
@@ -52,13 +52,13 @@ nak decode npub1...
 nak decode nevent1...
 nak encode npub <hex-pubkey>
 nak encode nevent <hex-event-id>
-nak encode nevent --relay wss://relay.damus.io <hex-event-id>
+nak encode nevent --relay wss://relay.abvstudio.net <hex-event-id>
 ```
 
 ## Create and Publish Events
 
 ```bash
-nak event -c 'hello world' --sec <secret-key> wss://relay.damus.io
+nak event -c 'hello world' --sec <secret-key> wss://relay.abvstudio.net
 echo "hello world" | nak publish --sec <secret-key>
 ```
 
@@ -83,10 +83,10 @@ nak key decrypt <ncryptsec> <password>
 
 ## Other Useful Commands
 
-- `nak relay wss://relay.damus.io` — get relay info document
+- `nak relay wss://relay.abvstudio.net` — get relay info document
 - `nak verify` — verify event hash and signature (pipe event JSON via stdin)
 - `nak nip <number>` — show description of a NIP
-- `nak count -k 1 -a <pubkey> wss://relay.damus.io` — count matching events
+- `nak count -k 1 -a <pubkey> wss://relay.abvstudio.net` — count matching events
 
 ## Important Notes
 
