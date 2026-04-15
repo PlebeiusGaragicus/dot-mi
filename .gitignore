@@ -32,6 +32,6 @@ shared/bin/*
 !shared/bin/.gitkeep
 
 # Submodule build artifacts
-pi-mono/node_modules/
-pi-mono/**/node_modules/
-pi-mono/**/dist/
+references/pi-mono/node_modules/
+references/pi-mono/**/node_modules/
+references/pi-mono/**/dist/

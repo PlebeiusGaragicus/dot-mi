@@ -56,7 +56,9 @@ dot-mi/
 │       ├── sessions/         # Runtime (gitignored)
 │       └── models.json       # ← symlink to shared/models.json
 ├── docs/                     # This documentation (MkDocs)
-└── pi-mono/                  # Read-only reference submodule
+└── references/               # Reference submodules
+    ├── pi-mono/              # Read-only upstream pi source
+    └── qmd/                  # Additional reference (see .gitmodules)
 ```
 
 ## Data Flow

@@ -36,7 +36,9 @@ dot-mi/
 ├── agents/                   # Standalone agent directories
 ├── workspaces/               # Ephemeral workspace directories (gitignored contents)
 ├── docs/                     # MkDocs documentation source
-└── pi-mono/                  # Read-only git submodule of upstream pi
+└── references/               # Reference submodules (not loaded as PI_CODING_AGENT_DIR)
+    ├── pi-mono/              # Read-only git submodule of upstream pi
+    └── qmd/                  # Additional reference (see .gitmodules)
 ```
 
 ### Team Directory Layout (`teams/<name>/`)

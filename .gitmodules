@@ -1,4 +1,7 @@
 [submodule "pi-mono"]
-	path = pi-mono
+	path = references/pi-mono
 	url = https://github.com/PlebeiusGaragicus/pi-mono.git
 	branch = main
+[submodule "references/qmd"]
+	path = references/qmd
+	url = https://github.com/tobi/qmd
