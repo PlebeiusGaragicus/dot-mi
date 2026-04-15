@@ -47,7 +47,7 @@ Then reload your shell:
 source ~/.zshrc  # or source ~/.bashrc
 ```
 
-This gives you the `p` command for each team and standalone agent (`p <name>`), plus `p chat` and `p explain`.
+This gives you the `p` command for each team and standalone agent (`p <name>`).
 
 `DOT_MI_DIR` is auto-detected from the script's location, so the repo can live anywhere. If you need to override it for some reason, set `DOT_MI_DIR` before sourcing:
 

@@ -1,6 +1,6 @@
 # p command
 
-`p` is the unified entry point for all teams, agents, and built-in bots.
+`p` is the unified entry point for all teams and standalone agents.
 
 ```sh
 # interactive (tty)
@@ -18,10 +18,6 @@ echo "explain the caching layer" | p recon
 p deepresearch -p "WebTransport protocol" > report.md      # progress visible, report saved
 p deepresearch -p "WebTransport protocol" 2>/dev/null       # silent, stdout only
 p recon -p "map the auth flow" > /dev/null                  # progress only, discard result
-
-# built-in bots (no team directory, flags passed directly to pi)
-p chat "what is OIDC?"
-p explain "how does the plugin system work?"
 
 # workspace management (workspace teams only)
 p deepresearch --list

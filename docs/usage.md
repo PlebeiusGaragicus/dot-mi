@@ -208,22 +208,7 @@ p blog "Write a short post comparing our REST and GraphQL endpoints, keep it und
 
 The LLM sees the team's agents and decides whether to delegate via subagent or handle the task directly.
 
-## 7. Built-in Bots (No Teams)
-
-For quick tasks that don't need team orchestration:
-
-```bash
-# General-purpose chatbot (read-only tools, no subagent extension)
-p chat "Explain the difference between OAuth 2.0 and OIDC"
-
-# Codebase explainer (read-only, produces structured reports)
-cd ~/projects/some-api
-p explain "How does the caching layer work?"
-```
-
-These don't use `PI_CODING_AGENT_DIR` at all -- they pass flags directly to pi and use `~/.pi` as the config root.
-
-## 8. Create a Custom Team
+## 7. Create a Custom Team
 
 Say you want a team for writing documentation:
 
@@ -268,7 +253,7 @@ cd ~/projects/my-api
 p docs-team "Write API reference docs for all endpoints in src/routes/"
 ```
 
-## 9. Sharing Auth Across Teams
+## 8. Sharing Auth Across Teams
 
 Each team has its own config root, including API authentication. After you authenticate in one team, share it with others:
 
@@ -282,7 +267,7 @@ p recon
 ./setup.sh link-auth recon blog
 ```
 
-## 10. Check Your Setup
+## 9. Check Your Setup
 
 See what teams are configured and whether their extensions are properly linked:
 

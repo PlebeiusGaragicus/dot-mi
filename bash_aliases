@@ -208,23 +208,25 @@ run-retro() {
 
 # ── p: unified agent dispatcher ──────────────────────────────────────────────
 #
-# Single entry point for all teams, agents, and built-in bots.
+# Single entry point for all teams and standalone agents under DOT_MI_DIR.
 #
+#   p                                   List available names (stderr)
 #   p <name> [flags...] [prompt]        Team or agent by name
 #   p <name> -p "do something"          Explicit prompt (non-interactive)
 #   echo "do something" | p <name>      Pipe stdin as prompt (non-interactive)
 #   p <name>                            Interactive (tty)
 #   p <name> --list                     Workspace teams: list past runs
 #   p <name> --resume [prefix]          Workspace teams: resume a run
-#
-# Built-in bots (no PI_CODING_AGENT_DIR, flags passed directly to pi):
-#   p chat [prompt]
-#   p explain [prompt]
 
 _dotmi_has_flag() {
   local flag="$1"; shift
   for arg in "$@"; do [ "$arg" = "$flag" ] && return 0; done
   return 1
+}
+
+_dotmi_list_available() {
+  echo "Available:" >&2
+  (cd "$DOT_MI_DIR" && ls -d teams/*/ agents/*/ 2>/dev/null | sed 's|.*/\(.*\)/|  \1|')
 }
 
 # ── batch mode filter ────────────────────────────────────────────────────────
@@ -274,41 +276,13 @@ _dotmi_json_filter() {
 }
 
 p() {
-  local name="${1:?Usage: p <name> [flags...] [prompt]}"
+  if [ "$#" -eq 0 ] || [ -z "${1:-}" ]; then
+    echo "Usage: p <name> [flags...] [prompt]" >&2
+    _dotmi_list_available
+    return 0
+  fi
+  local name="$1"
   shift
-
-  # Built-in bots (no team/agent directory)
-  case "$name" in
-    chat)
-      pi \
-        --system-prompt 'You are a knowledgeable and informative chatbot.
-You help with answering questions, explaining concepts, brainstorming ideas, and casual conversation.
-Be conversational and approachable while remaining terse and to-the-point.' \
-        --tools read,grep,find,ls \
-        --no-skills \
-        --no-prompt-templates \
-        --no-themes \
-        "$@"
-      return $?
-      ;;
-    explain)
-      pi \
-        --system-prompt 'You are a codebase analyst. Thoroughly review the current repository or directory and provide a detailed, well-structured report.
-
-Start by exploring the project structure, reading key files (README, config, entry points), and tracing relevant code paths. Then deliver a clear summary covering:
-- Project purpose and architecture
-- Key files and directories relevant to the query
-- How the pieces fit together
-- Any notable patterns, dependencies, or concerns
-
-Be thorough but organized. Use headings and bullet points. Cite specific files and line numbers.' \
-        --tools read,grep,find,ls \
-        --no-skills \
-        --no-prompt-templates \
-        "$@"
-      return $?
-      ;;
-  esac
 
   # Resolve config directory: teams/ first, then agents/
   local config_dir=""
@@ -318,8 +292,7 @@ Be thorough but organized. Use headings and bullet points. Cite specific files a
     config_dir="$DOT_MI_DIR/agents/$name"
   else
     echo "p: unknown agent or team: $name" >&2
-    echo "Available:" >&2
-    (cd "$DOT_MI_DIR" && ls -d teams/*/  agents/*/ 2>/dev/null | sed 's|.*/\(.*\)/|  \1|')
+    _dotmi_list_available
     return 1
   fi
 
