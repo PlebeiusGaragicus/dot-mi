@@ -61,3 +61,8 @@ run-retro deepresearch > retro.md                 # save report to file
 ```sh
 curl -s -H "Authorization: Bearer $PLEBCHAT_API_KEY" "https://api.plebchat.me/v1/models" | jq
 ```
+
+## see all details
+```sh
+curl -s -H "Authorization: Bearer $PLEBCHAT_API_KEY" "https://api.plebchat.me/api/v1/models" | jq
+```
