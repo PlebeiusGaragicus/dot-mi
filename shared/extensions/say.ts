@@ -3,13 +3,16 @@
  *
  * - Auto TTS: off by default, or pass `--tts-enable` (e.g. in `pi-args`) to start with auto TTS on;
  *   `/tts-toggle` (on | off | no args to toggle) still applies for the session after startup/reload.
- * - Streaming: when auto TTS is on, each completed sentence is queued and spoken as soon as it
- *   arrives during assistant streaming, instead of waiting for the full reply.
- * - Manual: `/say` speaks the last assistant reply in the session; `/say-stop-speaking` halts it.
+ * - Streaming: when auto TTS is on, text is split on NEWLINES only (not sentence punctuation) and
+ *   each line is queued and spoken as soon as it arrives during assistant streaming. This keeps
+ *   multi-sentence paragraphs gap-free (one `say` call per paragraph) while still starting speech
+ *   before the full reply is generated. Bullet items, table rows, and paragraph breaks still get
+ *   a gap between them because each is its own line in the source text.
+ * - Manual: `/say` speaks the last assistant reply in the session; `/stop-speaking` halts it.
  * - Replaces URLs with "URL redacted"; strips Markdown `*` and `#` so `say` does not read them aloud.
  * - Only runs when `ctx.hasUI` (interactive TUI) on macOS.
  * - Speech rate: `say -r` (words per minute), see SAY_RATE_WPM.
- * - A new user prompt, `/say-stop-speaking`, or pi exiting all cancel in-flight speech.
+ * - A new user prompt, `/stop-speaking`, `/tts-toggle off`, or pi exiting all cancel speech.
  */
 
 import type { ExtensionAPI } from "@mariozechner/pi-coding-agent";
@@ -18,48 +21,59 @@ import { type ChildProcess, spawn } from "node:child_process";
 const URL_REDACTED = "URL redacted";
 const MAX_CHARS = 32_000;
 /** Words per minute for `say -r` */
-const SAY_RATE_WPM = 335;
-/** Minimum cleaned characters before a sentence is flushed to the queue. Shorter fragments
- *  wait for more text so `say` does not stutter on one-word utterances like "Ok.". */
-const MIN_SENTENCE_CHARS = 12;
+const SAY_RATE_WPM = 320;
 
 /** In-memory; initialized from `--tts-enable` on startup/reload, then `/tts-toggle` */
 let autoTtsEnabled = false;
 
+/** Currently-speaking `say` child, or null. Only one plays at a time. */
 let currentSay: ChildProcess | null = null;
+/** Pre-warmed next `say` child, started while `currentSay` is playing so the next sentence
+ *  does not pay a full fork/exec/voice-load on transition. Audio overlap is prevented by
+ *  keeping it SIGSTOPped until the current child exits. */
+let pendingSay: { child: ChildProcess } | null = null;
 const speechQueue: string[] = [];
-let speaking = false;
 
-/** Per-contentIndex buffers of streamed text not yet flushed as a sentence */
+/** Per-contentIndex buffers of streamed text not yet terminated by a newline */
 const pendingByIndex = new Map<number, string>();
-/** Per-contentIndex accumulators of completed-but-too-short sentences, prepended to the
- *  next full-length sentence so `say` speaks a longer coherent chunk instead of stuttering
- *  on one-word fragments. */
-const shortPrefixByIndex = new Map<number, string>();
-/** Set when streaming has already produced at least one spoken sentence for the current
+/** Set when streaming has already produced at least one spoken line for the current
  *  turn so the `agent_end` fallback does not re-speak the whole reply. */
 let streamedThisTurn = false;
 /** True once exit/signal handlers have been installed (only once per process). */
 let exitHandlersInstalled = false;
 
-function stopSay(): void {
-	const c = currentSay;
+function killChild(c: ChildProcess | null | undefined): void {
 	if (!c) return;
-	currentSay = null;
 	try {
-		c.stdin?.destroy();
-		c.kill("SIGTERM");
+		c.kill("SIGKILL");
 	} catch {
 		/* ignore — process may already be dead */
 	}
 }
 
+function stopSay(): void {
+	const cur = currentSay;
+	currentSay = null;
+	const pen = pendingSay;
+	pendingSay = null;
+	// Resume the pending child before killing so SIGKILL actually delivers (SIGSTOPped
+	// processes queue signals but our SIGKILL should go through regardless; doing the
+	// SIGCONT first is belt-and-suspenders).
+	if (pen) {
+		try {
+			pen.child.kill("SIGCONT");
+		} catch {
+			/* ignore */
+		}
+		killChild(pen.child);
+	}
+	killChild(cur);
+}
+
 function resetSpeechState(): void {
 	speechQueue.length = 0;
 	pendingByIndex.clear();
-	shortPrefixByIndex.clear();
 	streamedThisTurn = false;
-	speaking = false;
 	stopSay();
 }
 
@@ -111,68 +125,152 @@ function getLastAssistantSpeechTextFromSession(entries: unknown[]): string | nul
 	return null;
 }
 
-/** Split a buffer into complete sentences + the remainder.
- *  Sentence boundaries: `.`, `!`, `?`, `…`, or a newline, optionally followed by closing
- *  quotes/brackets, terminated by whitespace or end-of-string. */
-const SENTENCE_END = /([.!?…]+["')\]]*)(?=\s|$)|\n+/g;
-function extractSentences(buf: string): { sentences: string[]; rest: string } {
-	const sentences: string[] = [];
+/** Split a buffer into complete lines + the remainder. Boundaries are one or more
+ *  consecutive newlines; empty lines are dropped. Splitting on newlines (rather than
+ *  sentence punctuation) lets a whole paragraph play as one `say` invocation, which is
+ *  gap-free internally — the only remaining gaps are where the source text itself has
+ *  a line break (bullet items, table rows, paragraph breaks). The trailing remainder
+ *  (everything after the last newline) is buffered until either another newline arrives
+ *  or `text_end`/`message_end`/`agent_end` flushes it. */
+const LINE_END = /\n+/g;
+function extractLines(buf: string): { lines: string[]; rest: string } {
+	const lines: string[] = [];
 	let last = 0;
-	SENTENCE_END.lastIndex = 0;
-	let m: RegExpExecArray | null = SENTENCE_END.exec(buf);
+	LINE_END.lastIndex = 0;
+	let m: RegExpExecArray | null = LINE_END.exec(buf);
 	while (m !== null) {
 		const end = m.index + m[0].length;
 		const chunk = buf.slice(last, end).trim();
-		if (chunk.length > 0) sentences.push(chunk);
+		if (chunk.length > 0) lines.push(chunk);
 		last = end;
-		m = SENTENCE_END.exec(buf);
+		m = LINE_END.exec(buf);
 	}
-	return { sentences, rest: buf.slice(last) };
+	return { lines, rest: buf.slice(last) };
 }
 
-function enqueueSpeech(text: string): void {
-	const cleaned = stripMarkdownForSpeech(redactUrlsForSpeech(text));
-	if (!cleaned) return;
-	const capped = cleaned.length > MAX_CHARS ? cleaned.slice(0, MAX_CHARS) : cleaned;
-	speechQueue.push(capped);
-	drainQueue();
+/** Start a `say` child for `text`. Text is fed via stdin (`-f -`) rather than argv so
+ *  that messages beginning with `-` or containing `--` aren't mis-parsed as CLI options
+ *  by `say`. The pipe is closed immediately so `say` sees EOF and speaks the buffered
+ *  text in a single shot. Returns the spawned child.
+ *
+ *  If `paused` is true, SIGSTOP is sent immediately so the child can initialize in the
+ *  background without grabbing the audio device; resume with SIGCONT when ready. The
+ *  text is written to the pipe buffer before the SIGSTOP can affect reading, so when
+ *  the child is later SIGCONT'd it reads the buffered bytes and starts speaking.
+ *
+ *  stderr is inherited so any `say` errors (missing voice, audio device busy, etc.) are
+ *  visible in the pi log instead of being silently swallowed. */
+function spawnSay(text: string, paused: boolean): ChildProcess {
+	const child = spawn("say", ["-r", String(SAY_RATE_WPM), "-f", "-"], {
+		stdio: ["pipe", "ignore", "inherit"],
+	});
+	try {
+		child.stdin?.end(text);
+	} catch {
+		/* ignore — child may have died before we could write */
+	}
+	if (paused) {
+		// Fire SIGSTOP immediately. There is a small race where `say` may have already
+		// opened the audio device before the signal arrives; in practice the window is
+		// short enough that any overlap is a blip, and the parallel fork/exec/voice-load
+		// is what we're here to pay for.
+		try {
+			child.kill("SIGSTOP");
+		} catch {
+			/* ignore */
+		}
+	}
+	return child;
 }
 
-function drainQueue(): void {
-	if (speaking) return;
+function startSpeaking(text: string): void {
+	// Reuse the pre-warmed child if its text matches what we intend to speak next.
+	if (pendingSay) {
+		const pen = pendingSay.child;
+		pendingSay = null;
+		currentSay = pen;
+		const clear = (): void => {
+			if (currentSay === pen) currentSay = null;
+			onSayFinished();
+		};
+		pen.on("exit", clear);
+		pen.on("error", clear);
+		try {
+			pen.kill("SIGCONT");
+		} catch {
+			/* ignore */
+		}
+	} else {
+		const child = spawnSay(text, false);
+		currentSay = child;
+		const clear = (): void => {
+			if (currentSay === child) currentSay = null;
+			onSayFinished();
+		};
+		child.on("exit", clear);
+		child.on("error", clear);
+	}
+	// Pre-warm the next queued sentence while this one plays.
+	prewarmNext();
+}
+
+function prewarmNext(): void {
+	if (pendingSay) return;
+	if (process.platform !== "darwin" || !autoTtsEnabled) return;
+	const next = speechQueue[0];
+	if (next === undefined) return;
+	const child = spawnSay(next, true);
+	pendingSay = { child };
+	// If the pre-warmed child dies unexpectedly (e.g. SIGKILL from stopSay during a
+	// reset), clear the slot so we don't try to SIGCONT a zombie later.
+	const clearIfSelf = (): void => {
+		if (pendingSay && pendingSay.child === child) pendingSay = null;
+	};
+	child.on("exit", clearIfSelf);
+	child.on("error", clearIfSelf);
+}
+
+function onSayFinished(): void {
 	if (process.platform !== "darwin" || !autoTtsEnabled) {
 		speechQueue.length = 0;
 		return;
 	}
 	const next = speechQueue.shift();
 	if (next === undefined) return;
-
-	speaking = true;
-	const child = spawn("say", ["-r", String(SAY_RATE_WPM)], {
-		stdio: ["pipe", "ignore", "ignore"],
-	});
-	currentSay = child;
-
-	const done = (): void => {
-		if (currentSay === child) currentSay = null;
-		speaking = false;
-		drainQueue();
-	};
-	child.on("exit", done);
-	child.on("error", done);
-
-	child.stdin.write(next, "utf8");
-	child.stdin.end();
-	// Intentionally no child.unref(): we want node to wait on `say` during normal flow,
-	// and exit handlers below guarantee the child is killed when pi itself exits.
+	startSpeaking(next);
 }
 
-/** Speak a full block of text by splitting it into sentences and queuing them.
+/** Enqueue `text` for speech. Returns `true` iff text was non-empty after cleaning and
+ *  actually made it into the speech pipeline (spawned or queued). Callers use the
+ *  return value to decide whether streaming has produced audible output this turn. */
+function enqueueSpeech(text: string): boolean {
+	const cleaned = stripMarkdownForSpeech(redactUrlsForSpeech(text));
+	if (!cleaned) return false;
+	const capped = cleaned.length > MAX_CHARS ? cleaned.slice(0, MAX_CHARS) : cleaned;
+
+	if (process.platform !== "darwin" || !autoTtsEnabled) return false;
+
+	if (currentSay === null) {
+		// Nothing playing: speak immediately and start pre-warming from the queue head
+		// (which is still empty, but `startSpeaking` calls `prewarmNext` which is a
+		// no-op when the queue is empty — the next `enqueueSpeech` below pre-warms).
+		startSpeaking(capped);
+	} else {
+		speechQueue.push(capped);
+		// If no pre-warm is in flight yet, kick one off for the sentence we just queued.
+		prewarmNext();
+	}
+	return true;
+}
+
+/** Speak a full block of text by splitting into lines and enqueueing each.
  *  Used by the manual `/say` command and the `agent_end` fallback. */
-function speakBlock(text: string): void {
-	const { sentences, rest } = extractSentences(text);
-	for (const s of sentences) enqueueSpeech(s);
-	if (rest.trim()) enqueueSpeech(rest);
+function speakBlock(text: string): boolean {
+	let any = false;
+	const { lines, rest } = extractLines(text);
+	for (const line of lines) any = enqueueSpeech(line) || any;
+	if (rest.trim()) any = enqueueSpeech(rest) || any;
+	return any;
 }
 
 function installExitHandlers(): void {
@@ -180,14 +278,18 @@ function installExitHandlers(): void {
 	exitHandlersInstalled = true;
 
 	const killOnExit = (): void => {
-		const c = currentSay;
-		if (!c) return;
-		currentSay = null;
-		try {
-			c.kill("SIGTERM");
-		} catch {
-			/* ignore */
+		// Resume any SIGSTOPped pending child so our SIGKILL definitely takes it down.
+		if (pendingSay) {
+			try {
+				pendingSay.child.kill("SIGCONT");
+			} catch {
+				/* ignore */
+			}
+			killChild(pendingSay.child);
+			pendingSay = null;
 		}
+		killChild(currentSay);
+		currentSay = null;
 	};
 
 	process.once("exit", killOnExit);
@@ -221,31 +323,15 @@ export default function (pi: ExtensionAPI) {
 		const e = event.assistantMessageEvent;
 		if (e.type === "text_delta") {
 			const prev = pendingByIndex.get(e.contentIndex) ?? "";
-			const next = prev + e.delta;
-			const { sentences, rest } = extractSentences(next);
+			const { lines, rest } = extractLines(prev + e.delta);
 			pendingByIndex.set(e.contentIndex, rest);
-			for (const s of sentences) {
-				const prefix = shortPrefixByIndex.get(e.contentIndex) ?? "";
-				const combined = prefix ? `${prefix} ${s}` : s;
-				const cleaned = stripMarkdownForSpeech(redactUrlsForSpeech(combined));
-				if (cleaned.length < MIN_SENTENCE_CHARS) {
-					shortPrefixByIndex.set(e.contentIndex, combined);
-					continue;
-				}
-				shortPrefixByIndex.delete(e.contentIndex);
-				streamedThisTurn = true;
-				enqueueSpeech(combined);
+			for (const line of lines) {
+				if (enqueueSpeech(line)) streamedThisTurn = true;
 			}
 		} else if (e.type === "text_end") {
 			const tail = pendingByIndex.get(e.contentIndex) ?? "";
-			const prefix = shortPrefixByIndex.get(e.contentIndex) ?? "";
 			pendingByIndex.delete(e.contentIndex);
-			shortPrefixByIndex.delete(e.contentIndex);
-			const flush = [prefix, tail].filter((s) => s.trim()).join(" ").trim();
-			if (flush) {
-				streamedThisTurn = true;
-				enqueueSpeech(flush);
-			}
+			if (tail.trim() && enqueueSpeech(tail)) streamedThisTurn = true;
 		}
 	});
 
@@ -256,17 +342,9 @@ export default function (pi: ExtensionAPI) {
 			resetSpeechState();
 			return;
 		}
-		const indexes = new Set<number>([...pendingByIndex.keys(), ...shortPrefixByIndex.keys()]);
-		for (const idx of indexes) {
-			const tail = pendingByIndex.get(idx) ?? "";
-			const prefix = shortPrefixByIndex.get(idx) ?? "";
+		for (const [idx, tail] of pendingByIndex) {
+			if (tail.trim() && enqueueSpeech(tail)) streamedThisTurn = true;
 			pendingByIndex.delete(idx);
-			shortPrefixByIndex.delete(idx);
-			const flush = [prefix, tail].filter((s) => s.trim()).join(" ").trim();
-			if (flush) {
-				streamedThisTurn = true;
-				enqueueSpeech(flush);
-			}
 		}
 	});
 
@@ -328,9 +406,8 @@ export default function (pi: ExtensionAPI) {
 				return;
 			}
 
-			// Manual replay: ensure nothing is already queued/playing so sentences do not
-			// overlap with a stream still flushing from the previous turn. This also needs
-			// autoTtsEnabled so the queue actually drains; temporarily flip it on if needed.
+			// Manual replay: stop anything in flight, then enqueue. Temporarily flip auto
+			// TTS on so enqueueSpeech will actually start `say`.
 			resetSpeechState();
 			const wasEnabled = autoTtsEnabled;
 			autoTtsEnabled = true;
@@ -342,11 +419,11 @@ export default function (pi: ExtensionAPI) {
 		},
 	});
 
-	pi.registerCommand("say-stop-speaking", {
+	pi.registerCommand("stop-speaking", {
 		description: "Stop any in-flight macOS `say` speech and clear the TTS queue",
 		handler: async (_args, ctx) => {
 			if (!ctx.hasUI) return;
-			const hadSomething = currentSay !== null || speechQueue.length > 0;
+			const hadSomething = currentSay !== null || pendingSay !== null || speechQueue.length > 0;
 			resetSpeechState();
 			ctx.ui.notify(hadSomething ? "Stopped speaking" : "Nothing to stop", "info");
 		},
