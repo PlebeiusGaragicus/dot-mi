@@ -50,7 +50,7 @@ teams/<name>/
 ├── extensions/               # Symlinked from shared/extensions/ (see Symlink Patterns)
 ├── agents/                   # Subagent definitions (team-agentname.md)
 ├── prompts/                  # Prompt templates (slash-command workflows)
-├── skills/                   # Per-skill symlinks from shared/skills/
+├── skills/                   # Per-skill symlinks (add with ./setup.sh link-skill)
 ├── themes/                   # Per-theme symlinks from shared/themes/
 ├── team-prompt.md            # Orchestrator config (frontmatter) + system prompt (body)
 ├── banner.txt                # Startup branding (ASCII art + usage text)
@@ -70,13 +70,14 @@ Same `PI_CODING_AGENT_DIR` root but without subagent orchestration:
 agents/<name>/
 ├── extensions/
 │   ├── <name>/               # Custom extension (index.ts)
-│   ├── agent-prompt.ts       # Shared: loads AGENT.md frontmatter (tools, model) + body
-│   └── ...                   # Other shared extensions symlinked from shared/extensions/
-├── AGENT.md                  # (optional) YAML frontmatter (tools, model) + body appended to system prompt
+│   ├── say.ts                # Shared (default scaffold): TTS / say tool — symlinked from shared
+│   ├── run-finish-notify.ts, startup-branding.ts   # Shared (default scaffold)
+│   └── ...                   # Optional: e.g. agent-prompt.ts — symlink manually if you use AGENT.md
+├── AGENT.md                  # (optional) YAML frontmatter + body — needs agent-prompt.ts symlinked to load
 ├── SYSTEM.md                 # (optional) Replaces pi's default system prompt (pi-native)
 ├── APPEND_SYSTEM.md          # (optional) Appends to pi's default system prompt (pi-native)
 ├── pi-args                   # (optional) Default CLI flags, one per line (read by p dispatcher)
-├── skills/                   # Per-skill symlinks from shared/skills/
+├── skills/                   # Per-skill symlinks from shared/skills/ (use ./setup.sh link-skill to add)
 ├── themes/                   # Per-theme symlinks from shared/themes/
 ├── banner.txt                # Startup branding (ASCII art + usage text)
 ├── workspace.conf            # (optional) Marks as workspace agent; lists subdirs to pre-create
@@ -89,11 +90,11 @@ agents/<name>/
 
 No `agents/` subdirectory, no `team-prompt.md`. The main pi process IS the agent. Custom behavior comes from the extension.
 
-**Prompt and tool customization** (two methods, can be combined):
+**Prompt and tool customization** (combine as needed):
 
-1. **`AGENT.md`** (via the `agent-prompt` shared extension): YAML frontmatter sets `tools` (comma-separated whitelist) and/or `model` (`provider/modelId`). The markdown body is appended to the system prompt. This mirrors `team-prompt.md` for teams.
-2. **`SYSTEM.md` / `APPEND_SYSTEM.md`** (pi-native): `SYSTEM.md` replaces pi's default system prompt entirely; `APPEND_SYSTEM.md` appends to it. No extension needed — pi discovers these from `PI_CODING_AGENT_DIR` at startup.
-3. **`pi-args`** (via `p` dispatcher): plain text file with default CLI flags (e.g. `--tools websearch`, `--no-tools`, `--no-skills`), one per line. The `p` function prepends these to the `pi` invocation.
+1. **`SYSTEM.md` / `APPEND_SYSTEM.md`** (pi-native): `SYSTEM.md` replaces pi's default system prompt entirely; `APPEND_SYSTEM.md` appends to it. No extension needed — pi discovers these from `PI_CODING_AGENT_DIR` at startup.
+2. **`pi-args`** (via `p` dispatcher): plain text file with default CLI flags (e.g. `--tools websearch`, `--no-tools`, `--no-skills`), one per line. The `p` function prepends these to the `pi` invocation.
+3. **`AGENT.md`** (optional, legacy): YAML frontmatter sets `tools` and/or `model`; body appended to the system prompt. Requires symlink: `ln -sf ../../../shared/extensions/agent-prompt.ts extensions/agent-prompt.ts` — the `agent-prompt` shared extension reads `AGENT.md`. New `setup.sh create-agent` scaffolds do not link this file by default.
 
 ## Key Concepts
 
@@ -257,8 +258,8 @@ Per-team orchestrator instructions, read by `subagent-teams` on startup and appe
 
 **How it works:**
 
-- **Extensions**: `setup.sh create` symlinks a standard set of shared extensions into `<teamDir>/extensions/`. Teams get the `subagent-teams` directory extension plus individual file extensions; standalone agents get only the file extensions. Additional extensions from `shared/extensions/` can be manually symlinked as needed.
-- **Skills**: Each skill directory in `shared/skills/` is symlinked individually into `<dir>/skills/`. Remove a symlink to exclude a skill from a team/agent.
+- **Extensions**: `setup.sh create` symlinks a standard set of shared extensions into `<teamDir>/extensions/`. Teams get the `subagent-teams` directory extension plus individual file extensions; `setup.sh create-agent` symlinks `run-finish-notify.ts`, `startup-branding.ts`, and `say.ts` plus your stub under `extensions/<name>/`. Additional extensions from `shared/extensions/` can be manually symlinked as needed (including `agent-prompt.ts` if you use `AGENT.md`).
+- **Skills**: `skills/` starts empty. Add symlinks with `./setup.sh link-skill <team-or-agent> <skill> [<skill> ...]` or `ln -sf ../../../shared/skills/<name> <dir>/skills/<name>`. Remove a symlink to exclude a skill.
 - **Themes**: Each theme JSON in `shared/themes/` is symlinked individually into `<dir>/themes/`.
 - **bin**: A single directory symlink (`bin → ../../shared/bin`) so pi downloads `fd`/`rg` once and all teams share them.
 - **models.json**: A single file symlink (`models.json → ../../shared/models.json`).
@@ -292,18 +293,14 @@ Then: add agent `.md` files to `agents/`, write `team-prompt.md`, add prompt tem
 ./setup.sh create-agent --workspace <agent-name>   # workspace mode
 ```
 
-Then customize using one or both methods:
-
-1. **`AGENT.md`** — add YAML frontmatter (`tools`, `model`) and a markdown body (appended to system prompt). Loaded by the `agent-prompt` shared extension (auto-symlinked by `setup.sh`).
-2. **`SYSTEM.md` + `pi-args`** — `SYSTEM.md` replaces the default prompt (pi-native); `pi-args` sets CLI flags like `--no-tools` or `--tools read,bash` (read by the `p` dispatcher).
+Then customize using **`SYSTEM.md` / `APPEND_SYSTEM.md`**, **`pi-args`**, and/or your stub extension. Optionally add **`AGENT.md`** and symlink `shared/extensions/agent-prompt.ts` into `extensions/` if you want YAML-driven tools/model.
 
 Optionally edit `agents/<name>/extensions/<name>/index.ts` for custom tools or lifecycle hooks.
 
 ### Add a shared skill
 
 1. Create `shared/skills/<name>/SKILL.md` with frontmatter (`name`, `description`)
-2. Symlink into desired teams: `ln -sf ../../../shared/skills/<name> teams/<team>/skills/<name>`
-3. Or run `setup.sh create <team>` for a new team (auto-links all shared skills)
+2. Link into a team or agent: `./setup.sh link-skill <team-or-agent> <name>` (or `ln -sf ../../../shared/skills/<name> <dir>/skills/<name>`)
 
 ### Write a custom extension
 

@@ -92,7 +92,8 @@ _dotmi_workspace_launch() {
   # Default: create fresh workspace
   local ws="$ws_root/$(date +%Y-%m-%d-%H%M%S)"
   mkdir -p "$ws"
-  while IFS= read -r subdir; do
+  # `|| [ -n "$subdir" ]` ensures the last line is processed if the file has no final newline.
+  while IFS= read -r subdir || [ -n "$subdir" ]; do
     [[ -n "$subdir" && "$subdir" != \#* ]] && mkdir -p "$ws/$subdir"
   done < "$config_dir/workspace.conf"
   echo "Workspace: $ws" >&2
@@ -351,7 +352,8 @@ p() {
   # One flag (or flag + value) per line. Lines starting with # are comments.
   if [ -f "$config_dir/pi-args" ]; then
     local _pi_args=()
-    while IFS= read -r _line; do
+    # `|| [ -n "$_line" ]` ensures the last line is processed if the file has no final newline.
+    while IFS= read -r _line || [ -n "$_line" ]; do
       [[ -n "$_line" && "$_line" != \#* ]] && _pi_args+=($_line)
     done < "$config_dir/pi-args"
     if [ ${#_pi_args[@]} -gt 0 ]; then

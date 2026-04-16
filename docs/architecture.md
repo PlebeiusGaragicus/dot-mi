@@ -106,8 +106,8 @@ graph TD
   SUser["User runs: p talk or p websearch ..."]
   SAlias["p reads pi-args, sets<br/>PI_CODING_AGENT_DIR=~/dot-mi/agents/name"]
   SPiMain["pi process starts<br/>discovers SYSTEM.md / APPEND_SYSTEM.md"]
-  SExtLoad["Loads extensions<br/>agent-prompt.ts reads AGENT.md"]
-  SHook["session_start: apply tools/model<br/>before_agent_start: append prompt body"]
+  SExtLoad["Loads extensions<br/>(optional agent-prompt + AGENT.md)"]
+  SHook["Extensions may hook session_start /<br/>before_agent_start"]
   SLLM["LLM processes with<br/>configured system prompt and tools"]
 
   SUser --> SAlias --> SPiMain --> SExtLoad --> SHook --> SLLM
@@ -176,7 +176,7 @@ Each team and standalone agent directory is a complete pi config root. This prov
 - **Session isolation** -- separate conversation history per team
 - **Settings isolation** -- per-team model preferences and configuration
 
-Shared resources (extensions, skills, themes, models, binaries) are symlinked from `shared/` to avoid duplication while preserving isolation boundaries. Downloaded binaries (`fd`, `rg`) are written once to `shared/bin/` through directory symlinks and shared across all teams automatically. Individual agents can further restrict which skills they load via frontmatter. Orchestrator tools can be restricted per-team via the `tools` field in `team-prompt.md` frontmatter (e.g. restricting to `read,find,ls,grep` to force subagent delegation).
+Shared resources (extensions, themes, models, binaries) are symlinked from `shared/` when you scaffold a team or agent. **Skills are opt-in:** link them with `./setup.sh link-skill` (or `ln -sf`) into `skills/`. Downloaded binaries (`fd`, `rg`) are written once to `shared/bin/` through directory symlinks and shared across all teams automatically. Subagents can further restrict which skills they load via frontmatter. Orchestrator tools can be restricted per-team via the `tools` field in `team-prompt.md` frontmatter (e.g. restricting to `read,find,ls,grep` to force subagent delegation).
 
 For shared authentication across teams and agents, symlink `auth.json`:
 

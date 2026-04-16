@@ -14,6 +14,7 @@ Commands:
   create [--workspace] <team-name>         Create a new team directory with shared extension symlinks
   create-agent [--workspace] <agent-name>  Create a standalone agent directory with a stub extension
   list                                     List existing teams and standalone agents
+  link-skill <team-or-agent> <skill> [...] Symlink one or more shared skills into a team or agent
   link-auth <src> <dst>                    Symlink auth.json from one team/agent (or path) into another
 
 Options:
@@ -28,6 +29,7 @@ Examples:
   $(basename "$0") create-agent twenty-questions
   $(basename "$0") create-agent --workspace my-researcher
   $(basename "$0") list
+  $(basename "$0") link-skill my-agent searxng
   $(basename "$0") link-auth recon blog
 EOF
   exit 1
@@ -56,14 +58,8 @@ create_team() {
   ln -sf "../../../shared/extensions/run-finish-notify.ts" "$team_dir/extensions/run-finish-notify.ts"
   ln -sf "../../../shared/extensions/startup-branding.ts" "$team_dir/extensions/startup-branding.ts"
 
-  # Symlink each shared skill individually into the team's skills/ directory.
-  # pi auto-discovers skills from <agentDir>/skills/.
-  # Remove unwanted symlinks to exclude skills from a team.
-  # Per-agent skill selection is also controlled via frontmatter (skills, no-skills).
-  for skill in "$SHARED_DIR"/skills/*/; do
-    [ -d "$skill" ] || continue
-    ln -sf "../../../shared/skills/$(basename "$skill")" "$team_dir/skills/$(basename "$skill")"
-  done
+  # skills/ is created empty — add symlinks with: ./setup.sh link-skill <team-name> <skill>
+  # pi auto-discovers skills from <agentDir>/skills/. Per-subagent control: frontmatter (skills, no-skills).
 
   # Symlink each shared theme individually into the team's themes/ directory.
   # pi auto-discovers themes from <agentDir>/themes/.
@@ -88,6 +84,12 @@ create_team() {
   "quietStartup": true
 }
 SETTINGS
+
+  cat > "$team_dir/pi-args" <<'PIARGS'
+# Optional default CLI flags for `p <name>` (read by bash_aliases). One flag per line; # starts a comment.
+#
+# IMPORTANT: must end with a newline (this comment also works) or last line will be ignored
+PIARGS
 
   # Generate startup banner with figlet (soft fail if not installed)
   if command -v figlet &>/dev/null; then
@@ -117,6 +119,8 @@ TEAMPROMPT
 # Subdirectories to pre-create in each workspace run.
 # One directory name per line. The alias reads this file
 # and runs mkdir -p for each entry before launching pi.
+#
+# IMPORTANT: must end with a newline (this comment also works) or last line will be ignored
 WSCONF
     echo "Created workspace.conf (edit to add workspace subdirectories)"
   fi
@@ -131,7 +135,7 @@ WSCONF
   echo "    extensions/          (symlinked to shared)"
   echo "    agents/              (add your agent .md files here)"
   echo "    prompts/             (add workflow prompt templates here)"
-  echo "    skills/              (individual skills symlinked from shared)"
+  echo "    skills/              (empty — use ./setup.sh link-skill $team_name <skill>)"
   echo "    themes/              (individual themes symlinked from shared)"
   echo "    bin/                 (symlinked to shared/bin, gitignored contents)"
   echo "    sessions/            (runtime session data, gitignored)"
@@ -139,16 +143,19 @@ WSCONF
   echo "    banner.txt           (startup branding -- edit to customize)"
   echo "    models.json          (symlinked to shared)"
   echo "    settings.json        (theme + quietStartup defaults)"
+  echo "    pi-args              (optional default CLI flags; see IMPORTANT line inside)"
   [ "$workspace" = true ] && echo "    workspace.conf       (workspace subdirectory list)"
   echo ""
   echo "Next steps:"
   echo "  1. Add agent .md files to $team_dir/agents/"
   echo "  2. Add prompt templates to $team_dir/prompts/"
   if [ "$workspace" = true ]; then
-    echo "  3. Edit workspace.conf to list subdirectories for each run"
-    echo "  4. Source bash_aliases and invoke: pi-$team_name \"your task\""
+    echo "  3. Link skills as needed: ./setup.sh link-skill $team_name <skill>"
+    echo "  4. Edit workspace.conf to list subdirectories for each run"
+    echo "  5. Source bash_aliases and invoke: pi-$team_name \"your task\""
   else
-    echo "  3. Source bash_aliases and invoke: pi-$team_name \"your task\""
+    echo "  3. Link skills as needed: ./setup.sh link-skill $team_name <skill>"
+    echo "  4. Source bash_aliases and invoke: pi-$team_name \"your task\""
   fi
 }
 
@@ -172,7 +179,7 @@ create_agent() {
   # Symlink shared extensions (but NOT subagent-teams -- standalone agents don't need it).
   ln -sf "../../../shared/extensions/run-finish-notify.ts" "$agent_dir/extensions/run-finish-notify.ts"
   ln -sf "../../../shared/extensions/startup-branding.ts" "$agent_dir/extensions/startup-branding.ts"
-  ln -sf "../../../shared/extensions/agent-prompt.ts" "$agent_dir/extensions/agent-prompt.ts"
+  ln -sf "../../../shared/extensions/say.ts" "$agent_dir/extensions/say.ts"
 
   # Create a stub extension for the agent to customize
   cat > "$agent_dir/extensions/$agent_name/index.ts" <<'STUB'
@@ -184,11 +191,7 @@ export default function (pi: ExtensionAPI) {
 }
 STUB
 
-  # Symlink shared skills, themes, bin, models (same as teams)
-  for skill in "$SHARED_DIR"/skills/*/; do
-    [ -d "$skill" ] || continue
-    ln -sf "../../../shared/skills/$(basename "$skill")" "$agent_dir/skills/$(basename "$skill")"
-  done
+  # skills/ is created empty — add symlinks with: ./setup.sh link-skill <agent-name> <skill>
 
   mkdir -p "$agent_dir/themes"
   for theme in "$SHARED_DIR"/themes/*.json; do
@@ -209,6 +212,12 @@ STUB
 }
 SETTINGS
 
+  cat > "$agent_dir/pi-args" <<'PIARGS'
+# Optional default CLI flags for `p <name>` (read by bash_aliases). One flag per line; # starts a comment.
+#
+# IMPORTANT: must end with a newline (this comment also works) or last line will be ignored
+PIARGS
+
   # Generate startup banner with figlet (soft fail if not installed)
   if command -v figlet &>/dev/null; then
     { figlet -f small "$agent_name"; echo "---"; echo "Agent: $agent_name"; } > "$agent_dir/banner.txt"
@@ -222,6 +231,8 @@ SETTINGS
 # Subdirectories to pre-create in each workspace run.
 # One directory name per line. The alias reads this file
 # and runs mkdir -p for each entry before launching pi.
+#
+# IMPORTANT: must end with a newline (this comment also works) or last line will be ignored
 WSCONF
     echo "Created workspace.conf (edit to add workspace subdirectories)"
   fi
@@ -233,23 +244,25 @@ WSCONF
   echo ""
   echo "Directory layout:"
   echo "  $agent_dir/"
-  echo "    extensions/$agent_name/  (your custom extension)"
-  echo "    skills/                  (individual skills symlinked from shared)"
+  echo "    extensions/              ($agent_name/, run-finish-notify, startup-branding, say.ts)"
+  echo "    skills/                  (empty — use ./setup.sh link-skill $agent_name <skill>)"
   echo "    themes/                  (individual themes symlinked from shared)"
   echo "    bin/                     (symlinked to shared/bin, gitignored contents)"
   echo "    sessions/                (runtime session data, gitignored)"
   echo "    models.json              (symlinked to shared)"
   echo "    settings.json            (theme + quietStartup defaults)"
+  echo "    pi-args                  (optional default CLI flags; see IMPORTANT line inside)"
   echo "    banner.txt               (startup branding -- edit to customize)"
   [ "$workspace" = true ] && echo "    workspace.conf           (workspace subdirectory list)"
   echo ""
   echo "Next steps:"
   echo "  1. Edit $agent_dir/extensions/$agent_name/index.ts"
+  echo "  2. Link skills as needed: ./setup.sh link-skill $agent_name <skill>"
   if [ "$workspace" = true ]; then
-    echo "  2. Edit workspace.conf to list subdirectories for each run"
-    echo "  3. Source bash_aliases and invoke: pi-$agent_name \"your task\""
+    echo "  3. Edit workspace.conf to list subdirectories for each run"
+    echo "  4. Source bash_aliases and invoke: pi-$agent_name \"your task\""
   else
-    echo "  2. Source bash_aliases and invoke: pi-$agent_name \"your task\""
+    echo "  3. Source bash_aliases and invoke: pi-$agent_name \"your task\""
   fi
 }
 
@@ -306,6 +319,34 @@ resolve_dir() {
   fi
 }
 
+link_skill() {
+  local target="$1"
+  shift
+  [ $# -lt 1 ] && {
+    echo "Error: at least one skill name required"
+    usage
+  }
+
+  local dst_dir
+  dst_dir=$(resolve_dir "$target") || {
+    echo "Error: '$target' does not exist as a team or agent"
+    exit 1
+  }
+
+  mkdir -p "$dst_dir/skills"
+
+  local name
+  for name in "$@"; do
+    local src="$SHARED_DIR/skills/$name"
+    if [ ! -d "$src" ]; then
+      echo "Error: no shared skill at $src"
+      exit 1
+    fi
+    ln -sf "../../../shared/skills/$name" "$dst_dir/skills/$name"
+    echo "Linked $dst_dir/skills/$name -> ../../../shared/skills/$name"
+  done
+}
+
 link_auth() {
   local src="$1"
   local dst="$2"
@@ -359,6 +400,11 @@ case "$1" in
     ;;
   list)
     list_teams
+    ;;
+  link-skill)
+    [ $# -lt 3 ] && { echo "Error: team/agent name and at least one skill required"; usage; }
+    shift
+    link_skill "$@"
     ;;
   link-auth)
     [ $# -lt 3 ] && { echo "Error: source and destination required"; usage; }

@@ -1,8 +1,10 @@
 /**
  * macOS TTS — speaks assistant text with `say`.
  *
- * - Auto TTS: off by default, or pass `--tts-enable` (e.g. in `pi-args`) to start with auto TTS on;
- *   `/tts-toggle` (on | off | no args to toggle) still applies for the session after startup/reload.
+ * - Auto TTS: off by default, or pass `--tts-enable` (e.g. in `pi-args`) for auto TTS on. On every
+ *   `session_start` (startup, `/new`, `/resume`, etc.), auto TTS is re-read from that flag so it
+ *   stays aligned with the agent’s CLI. `/tts-toggle` (on | off | empty to toggle) applies until
+ *   the next `session_start`, when the CLI default wins again.
  * - Streaming: when auto TTS is on, text is split on NEWLINES only (not sentence punctuation) and
  *   each line is queued and spoken as soon as it arrives during assistant streaming. This keeps
  *   multi-sentence paragraphs gap-free (one `say` call per paragraph) while still starting speech
@@ -23,7 +25,7 @@ const MAX_CHARS = 32_000;
 /** Words per minute for `say -r` */
 const SAY_RATE_WPM = 320;
 
-/** In-memory; initialized from `--tts-enable` on startup/reload, then `/tts-toggle` */
+/** In-memory; synced from `--tts-enable` on every session_start; `/tts-toggle` until next session_start */
 let autoTtsEnabled = false;
 
 /** Currently-speaking `say` child, or null. Only one plays at a time. */
@@ -309,8 +311,7 @@ export default function (pi: ExtensionAPI) {
 		description: "Enable automatic TTS after each assistant reply (macOS say)",
 	});
 
-	pi.on("session_start", async (event) => {
-		if (event.reason !== "startup" && event.reason !== "reload") return;
+	pi.on("session_start", async () => {
 		autoTtsEnabled = pi.getFlag("tts-enable") === true;
 	});
 

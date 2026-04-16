@@ -220,7 +220,7 @@ Say you want a team for writing documentation:
 ./setup.sh create --workspace docs-team
 ```
 
-This creates `teams/docs-team/` with extensions, skills, and models already symlinked. Now add agents:
+This creates `teams/docs-team/` with extensions and models symlinked; **`skills/` is empty** until you run `./setup.sh link-skill docs-team <skill>`. Now add agents:
 
 ```bash
 cat > ~/dot-mi/teams/docs-team/agents/docs-writer.md << 'EOF'

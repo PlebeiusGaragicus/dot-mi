@@ -2,5 +2,5 @@
 --no-tools
 --no-skills
 --no-prompt-templates
-# Auto TTS on startup (say extension). Uncomment to pass --tts-enable to pi:
+# Auto TTS on startup (say extension)
 --tts-enable

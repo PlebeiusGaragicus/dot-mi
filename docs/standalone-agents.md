@@ -19,14 +19,14 @@ agents/<name>/
 ├── extensions/
 │   ├── <name>/               # Your custom extension
 │   │   └── index.ts
-│   ├── agent-prompt.ts       # Shared: loads AGENT.md (tools, model, prompt body)
 │   ├── run-finish-notify.ts  # Shared notification extension (symlinked)
-│   └── startup-branding.ts   # Shared startup branding (symlinked)
-├── AGENT.md                  # (optional) YAML frontmatter (tools, model) + prompt body
+│   ├── startup-branding.ts   # Shared startup branding (symlinked)
+│   └── say.ts                # Shared TTS / say (symlinked by default scaffold)
+├── AGENT.md                  # (optional) Requires agent-prompt.ts symlink — see below
 ├── SYSTEM.md                 # (optional) Replaces pi's default system prompt
 ├── APPEND_SYSTEM.md          # (optional) Appends to pi's default system prompt
 ├── pi-args                   # (optional) Default CLI flags (read by p dispatcher)
-├── skills/                   # Per-skill symlinks from shared/skills/
+├── skills/                   # Add skills with ./setup.sh link-skill <name> <skill>
 ├── themes/                   # Per-theme symlinks from shared/themes/
 ├── banner.txt                # Startup branding (ASCII art + usage text)
 ├── bin/                      # → shared/bin/ (fd, rg)
@@ -42,7 +42,7 @@ The directory is a complete `PI_CODING_AGENT_DIR` root, just like a team directo
 | `subagent-teams` extension | Symlinked | Not present |
 | `agents/` subdirectory | Subagent definitions | Not present |
 | `prompts/` subdirectory | Workflow templates | Not present |
-| `team-prompt.md` | Orchestrator instructions | `AGENT.md` (via `agent-prompt` extension) |
+| `team-prompt.md` | Orchestrator instructions | `SYSTEM.md` / `APPEND_SYSTEM.md`, optional `AGENT.md` + `agent-prompt.ts` |
 | Custom extension | Optional | Core of the agent |
 
 ## Creating a Standalone Agent
@@ -57,40 +57,14 @@ This creates the directory structure with shared symlinks and a stub extension a
 
 ### Customizing the Prompt and Tools
 
-There are two methods for customizing a standalone agent's system prompt and available tools. Both can be used independently or combined.
+**Preferred (pi-native): `SYSTEM.md` / `APPEND_SYSTEM.md` + `pi-args`**
 
-#### Method 1: `AGENT.md` (via `agent-prompt` extension)
-
-The standalone-agent equivalent of `team-prompt.md` for teams. Uses YAML frontmatter for configuration and a markdown body appended to the system prompt.
-
-```markdown
----
-tools: websearch
-model: plebchat/qwen/qwen3-coder-next
----
-
-You are a web search agent. Use the websearch tool to answer questions.
-Cite source URLs from search results.
-```
-
-| Frontmatter | Required | Description |
-|-------------|----------|-------------|
-| `tools` | No | Comma-separated tool whitelist (restricts available tools) |
-| `model` | No | Model override (`provider/modelId`) |
-
-The `agent-prompt` shared extension (`shared/extensions/agent-prompt.ts`) reads this file and applies:
-- `tools` via `pi.setActiveTools()` on `session_start`
-- `model` via `pi.setModel()` on `session_start`
-- Body appended to system prompt via `before_agent_start`
-
-#### Method 2: `SYSTEM.md` / `APPEND_SYSTEM.md` + `pi-args` (pi-native, zero code)
-
-Pi natively discovers these files from `PI_CODING_AGENT_DIR`:
+Pi discovers these files from `PI_CODING_AGENT_DIR`:
 
 - **`SYSTEM.md`** — replaces pi's entire default system prompt
 - **`APPEND_SYSTEM.md`** — appends to pi's default prompt (preserves built-in tool docs and guidelines)
 
-For tool restriction without `AGENT.md`, use a **`pi-args`** file with CLI flags:
+For tool restriction, use a **`pi-args`** file with CLI flags:
 
 ```
 # pi-args — default CLI flags, one per line
@@ -102,9 +76,17 @@ The `p` dispatcher reads this file and prepends the flags to every `pi` invocati
 
 Available flags include `--tools <list>` (whitelist), `--no-tools` (disable all built-in tools), `--no-skills`, `--no-prompt-templates`, `--model <provider/id>`, etc. See `pi --help` for the full list.
 
-#### Combining Both Methods
+**Optional: `AGENT.md` (via manually linked `agent-prompt` extension)**
 
-`SYSTEM.md` sets the base prompt, `AGENT.md` body appends to it, and `AGENT.md` frontmatter restricts tools/model. Use whichever combination fits your agent.
+YAML frontmatter + markdown body, similar to `team-prompt.md` for teams. **`setup.sh create-agent` does not symlink `agent-prompt.ts`.** To use it:
+
+```bash
+ln -sf ../../../shared/extensions/agent-prompt.ts agents/<name>/extensions/agent-prompt.ts
+```
+
+Then add `AGENT.md` with frontmatter (`tools`, `model`) and a body. The `agent-prompt` extension (`shared/extensions/agent-prompt.ts`) applies tools/model on `session_start` and appends the body via `before_agent_start`.
+
+**Combining:** `SYSTEM.md` sets the base prompt; with `AGENT.md` + `agent-prompt`, the body can append and frontmatter can restrict tools/model.
 
 ### Writing the Extension
 
@@ -168,9 +150,15 @@ Source: `agents/twenty-questions/extensions/twenty-questions/index.ts`
 
 ## Customizing
 
-### Removing Skills
+### Skills
 
-Standalone agents inherit all shared skills by default. To remove one:
+`skills/` starts empty. Add shared skills:
+
+```bash
+./setup.sh link-skill my-agent searxng
+```
+
+Remove a symlink to drop a skill:
 
 ```bash
 rm agents/my-agent/skills/playwright
