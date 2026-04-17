@@ -17,6 +17,12 @@ echo 'source ~/dot-mi/bash_aliases' >> ~/.zshrc
 source ~/dot-mi/bash_aliases
 ```
 
+### Zsh tab completion for `p`
+
+When you use zsh, `bash_aliases` sources [p-completion.zsh](p-completion.zsh) at the end (skipped when the same file is sourced from bash). Put `autoload -Uz compinit && compinit` **before** `source …/bash_aliases` in `~/.zshrc` so `compdef` is available.
+
+`p b` + Tab completes to real directory names such as `blog` (case-insensitive matching; inserted text matches on-disk spelling). A bare `p ` + Tab does nothing so it does not duplicate the list from running `p` alone.
+
 ## Create a Team
 
 ```bash

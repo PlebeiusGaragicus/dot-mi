@@ -380,3 +380,10 @@ p() {
     fi
   fi
 }
+
+# ── Zsh: tab completion for `p` ───────────────────────────────────────────────
+# zsh-only globs cannot live in this file: bash parses the whole script when sourced
+# from ~/.bashrc, so the implementation is in p-completion.zsh.
+if [ -n "${ZSH_VERSION:-}" ] && [ -f "$DOT_MI_DIR/p-completion.zsh" ]; then
+  . "$DOT_MI_DIR/p-completion.zsh"
+fi

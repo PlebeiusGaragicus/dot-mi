@@ -22,6 +22,7 @@ dot-mi/
 ├── README.md                 # Human-facing overview
 ├── setup.sh                  # Scaffold teams and agents
 ├── bash_aliases              # Shell functions: `p` command (source in .zshrc/.bashrc)
+├── p-completion.zsh          # Zsh tab completion for `p` (sourced from bash_aliases)
 ├── example.env               # API key template (copy to .env)
 ├── mkdocs.yml                # MkDocs config for docs site
 │
@@ -53,6 +54,7 @@ teams/<name>/
 ├── skills/                   # Per-skill symlinks (add with ./setup.sh link-skill)
 ├── themes/                   # Per-theme symlinks from shared/themes/
 ├── team-prompt.md            # Orchestrator config (frontmatter) + system prompt (body)
+├── pi-args                   # (optional) Default CLI flags for the orchestrator (read by `p`)
 ├── banner.txt                # Startup branding (ASCII art + usage text)
 ├── workspace.conf            # (optional) Marks as workspace agent; lists subdirs to pre-create
 ├── bin/                      # → shared/bin/
@@ -73,10 +75,10 @@ agents/<name>/
 │   ├── say.ts                # Shared (default scaffold): TTS / say tool — symlinked from shared
 │   ├── run-finish-notify.ts, startup-branding.ts   # Shared (default scaffold)
 │   └── ...                   # Optional: e.g. agent-prompt.ts — symlink manually if you use AGENT.md
-├── AGENT.md                  # (optional) YAML frontmatter + body — needs agent-prompt.ts symlinked to load
-├── SYSTEM.md                 # (optional) Replaces pi's default system prompt (pi-native)
+├── AGENT.md                  # (optional, not scaffolded) YAML + body — symlink agent-prompt.ts to load
+├── SYSTEM.md                 # Starter system prompt (scaffolded by setup.sh; replaces pi default)
 ├── APPEND_SYSTEM.md          # (optional) Appends to pi's default system prompt (pi-native)
-├── pi-args                   # (optional) Default CLI flags, one per line (read by p dispatcher)
+├── pi-args                   # (optional) Default CLI flags, one per line (read by `p`; end file per IMPORTANT line)
 ├── skills/                   # Per-skill symlinks from shared/skills/ (use ./setup.sh link-skill to add)
 ├── themes/                   # Per-theme symlinks from shared/themes/
 ├── banner.txt                # Startup branding (ASCII art + usage text)
@@ -93,7 +95,7 @@ No `agents/` subdirectory, no `team-prompt.md`. The main pi process IS the agent
 **Prompt and tool customization** (combine as needed):
 
 1. **`SYSTEM.md` / `APPEND_SYSTEM.md`** (pi-native): `SYSTEM.md` replaces pi's default system prompt entirely; `APPEND_SYSTEM.md` appends to it. No extension needed — pi discovers these from `PI_CODING_AGENT_DIR` at startup.
-2. **`pi-args`** (via `p` dispatcher): plain text file with default CLI flags (e.g. `--tools websearch`, `--no-tools`, `--no-skills`), one per line. The `p` function prepends these to the `pi` invocation.
+2. **`pi-args`** (via `p` dispatcher): plain text file with default CLI flags (e.g. `--tools websearch`, `--no-tools`, `--no-skills`), one per line. The `p` function prepends these to the `pi` invocation. **End the file with a newline after the last flag** (or leave the scaffolded trailing comment line) so the last flag is not dropped; `bash_aliases` also defends against a missing final newline when reading this file.
 3. **`AGENT.md`** (optional, legacy): YAML frontmatter sets `tools` and/or `model`; body appended to the system prompt. Requires symlink: `ln -sf ../../../shared/extensions/agent-prompt.ts extensions/agent-prompt.ts` — the `agent-prompt` shared extension reads `AGENT.md`. New `setup.sh create-agent` scaffolds do not link this file by default.
 
 ## Key Concepts
@@ -215,13 +217,14 @@ Skills live in `shared/skills/` and are symlinked per-skill into each team/agent
 
 Any team or standalone agent can run as a **workspace agent** by adding a `workspace.conf` file to its directory. When present, `p <name>` launches pi in a fresh dated directory (`workspaces/<name>/<timestamp>/`) inside a subshell, so the user's shell stays in its original directory after pi exits.
 
-**`workspace.conf` format**: one subdirectory name per line. Lines starting with `#` are comments. Each listed directory is pre-created in the workspace before pi starts.
+**`workspace.conf` format**: one subdirectory name per line. Lines starting with `#` are comments. Each listed directory is pre-created in the workspace before pi starts. **End the file with a newline after the last directory name** (or keep the scaffolded trailing comment); `bash_aliases` also defends against a missing final newline when reading this file.
 
 ```
 # teams/deepresearch/workspace.conf
 sources
 drafts
 sessions
+# IMPORTANT: must end with a newline (this comment also works) or last line will be ignored
 ```
 
 **To convert any existing team/agent to workspace mode**: create `workspace.conf` in its directory (can be empty for a bare workspace, or list subdirectories).
@@ -293,7 +296,7 @@ Then: add agent `.md` files to `agents/`, write `team-prompt.md`, add prompt tem
 ./setup.sh create-agent --workspace <agent-name>   # workspace mode
 ```
 
-Then customize using **`SYSTEM.md` / `APPEND_SYSTEM.md`**, **`pi-args`**, and/or your stub extension. Optionally add **`AGENT.md`** and symlink `shared/extensions/agent-prompt.ts` into `extensions/` if you want YAML-driven tools/model.
+**`setup.sh create-agent`** writes **`SYSTEM.md`** and **`pi-args`**; it does **not** create **`AGENT.md`**. Customize **`SYSTEM.md`**, **`pi-args`**, and/or your stub extension. Add **`AGENT.md`** + symlink **`agent-prompt.ts`** only if you want YAML-driven tools/model.
 
 Optionally edit `agents/<name>/extensions/<name>/index.ts` for custom tools or lifecycle hooks.
 
@@ -325,7 +328,8 @@ Optionally edit `agents/<name>/extensions/<name>/index.ts` for custom tools or l
 | `agents/*/AGENT.md` | Yes | Agent prompt config (frontmatter: tools, model; body: system prompt append) |
 | `agents/*/SYSTEM.md` | Yes | Replaces pi's default system prompt (pi-native) |
 | `agents/*/APPEND_SYSTEM.md` | Yes | Appends to pi's default system prompt (pi-native) |
-| `agents/*/pi-args` | Yes | Default CLI flags for the agent (read by `p` dispatcher) |
+| `agents/*/pi-args` | Yes | Default CLI flags (read by `p` dispatcher) |
+| `teams/*/pi-args` | Yes | Optional default CLI flags for the team orchestrator (read by `p`) |
 | `agents/*/extensions/**/*.ts` | Yes | Custom agent extensions |
 | `setup.sh` | Yes | Team/agent scaffolding |
 | `bash_aliases` | Yes | Shell functions: `p` command |

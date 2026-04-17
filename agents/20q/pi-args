@@ -1,7 +1,7 @@
-# Chat only — no tools, no skills
+# Game only — no tools, no skills
 --no-tools
 --no-skills
 --no-prompt-templates
-# Auto TTS on startup (say extension)
---tts-enable
+--model
+plebchat/google/gemma-4-31b
 # IMPORTANT: must end with a newline / or comment

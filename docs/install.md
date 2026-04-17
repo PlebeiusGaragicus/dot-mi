@@ -100,6 +100,7 @@ teams/<team-name>/
 ├── bin -> ../../shared/bin  (shared binaries -- fd, rg downloaded on first run)
 ├── sessions/            (runtime session storage, gitignored)
 ├── settings.json        (theme + quietStartup defaults, gitignored)
+├── pi-args              (optional default CLI flags; keep trailing IMPORTANT comment line)
 └── models.json -> ../../shared/models.json
 ```
 
@@ -142,10 +143,12 @@ agents/<agent-name>/
 ├── bin -> ../../shared/bin
 ├── sessions/            (runtime, gitignored)
 ├── settings.json        (theme + quietStartup defaults, gitignored)
+├── pi-args              (optional default CLI flags; keep trailing IMPORTANT comment line)
+├── SYSTEM.md            (starter system prompt — edit to customize; no AGENT.md scaffold)
 └── models.json -> ../../shared/models.json
 ```
 
-Unlike teams, standalone agents do **not** get the `subagent-teams` extension or an `agents/` subdirectory. The main pi process IS the agent. Default scaffolds symlink **`say.ts`** (TTS/say) plus run-finish and startup branding; **`agent-prompt.ts` is not linked** — use `SYSTEM.md` / `APPEND_SYSTEM.md` and `pi-args`, or symlink `agent-prompt.ts` yourself if you want `AGENT.md` (see [Standalone Agents](standalone-agents.md)). `bash_aliases` wires each agent into `p <name>`.
+Unlike teams, standalone agents do **not** get the `subagent-teams` extension or an `agents/` subdirectory. The main pi process IS the agent. Default scaffolds include **`SYSTEM.md`**, symlink **`say.ts`** (TTS/say) plus run-finish and startup branding, and do **not** create **`AGENT.md`** (add it yourself and symlink `agent-prompt.ts` if you want YAML frontmatter; see [Standalone Agents](standalone-agents.md)). `bash_aliases` wires each agent into `p <name>`.
 
 Example:
 

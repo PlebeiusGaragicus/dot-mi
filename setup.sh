@@ -187,7 +187,7 @@ import type { ExtensionAPI } from "@mariozechner/pi-coding-agent";
 
 export default function (pi: ExtensionAPI) {
 	// Add lifecycle hooks and custom tools here.
-	// See AGENTS.md or docs/reference/extensions.md for the full API.
+	// See docs/reference/extensions.md for the extension API.
 }
 STUB
 
@@ -217,6 +217,12 @@ SETTINGS
 #
 # IMPORTANT: must end with a newline (this comment also works) or last line will be ignored
 PIARGS
+
+  cat > "$agent_dir/SYSTEM.md" <<SYSTEMMD
+# Edit the body below. Pi loads this file as your system prompt (replaces the default).
+
+You are a helpful assistant for the **$agent_name** agent. Describe your role, tone, and constraints here.
+SYSTEMMD
 
   # Generate startup banner with figlet (soft fail if not installed)
   if command -v figlet &>/dev/null; then
@@ -252,17 +258,19 @@ WSCONF
   echo "    models.json              (symlinked to shared)"
   echo "    settings.json            (theme + quietStartup defaults)"
   echo "    pi-args                  (optional default CLI flags; see IMPORTANT line inside)"
+  echo "    SYSTEM.md                (system prompt — edit to customize)"
   echo "    banner.txt               (startup branding -- edit to customize)"
   [ "$workspace" = true ] && echo "    workspace.conf           (workspace subdirectory list)"
   echo ""
   echo "Next steps:"
-  echo "  1. Edit $agent_dir/extensions/$agent_name/index.ts"
-  echo "  2. Link skills as needed: ./setup.sh link-skill $agent_name <skill>"
+  echo "  1. Edit $agent_dir/SYSTEM.md (and optionally pi-args)"
+  echo "  2. Edit $agent_dir/extensions/$agent_name/index.ts if you need custom tools"
+  echo "  3. Link skills as needed: ./setup.sh link-skill $agent_name <skill>"
   if [ "$workspace" = true ]; then
-    echo "  3. Edit workspace.conf to list subdirectories for each run"
-    echo "  4. Source bash_aliases and invoke: pi-$agent_name \"your task\""
+    echo "  4. Edit workspace.conf to list subdirectories for each run"
+    echo "  5. Source bash_aliases and invoke: pi-$agent_name \"your task\""
   else
-    echo "  3. Source bash_aliases and invoke: pi-$agent_name \"your task\""
+    echo "  4. Source bash_aliases and invoke: pi-$agent_name \"your task\""
   fi
 }
 
