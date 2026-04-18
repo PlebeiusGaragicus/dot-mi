@@ -1,5 +1,3 @@
-#!/bin/bash
-
 # ── dot-mi: unified pi agent launcher ───────────────────────────────────────
 #
 # Source this file from ~/.bashrc or ~/.zshrc:
@@ -16,7 +14,11 @@
 PI_TELEMETRY=0
 
 # auto-detect DOT_MI_DIR from this script's location
-DOT_MI_DIR="${DOT_MI_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" && pwd)}"
+if [ -n "${ZSH_VERSION:-}" ]; then
+    DOT_MI_DIR="${DOT_MI_DIR:-$(cd "$(dirname "${(%):-%x}")" && pwd)}"
+else
+    DOT_MI_DIR="${DOT_MI_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" && pwd)}"
+fi
 
 # Load API keys if present
 [ -f "$DOT_MI_DIR/.env" ] && source "$DOT_MI_DIR/.env"
@@ -384,6 +386,10 @@ p() {
 # ── Zsh: tab completion for `p` ───────────────────────────────────────────────
 # zsh-only globs cannot live in this file: bash parses the whole script when sourced
 # from ~/.bashrc, so the implementation is in p-completion.zsh.
+# Initialize zsh completion system
+if [ -n "${ZSH_VERSION:-}" ]; then
+  autoload -Uz compinit && compinit
+fi
 if [ -n "${ZSH_VERSION:-}" ] && [ -f "$DOT_MI_DIR/p-completion.zsh" ]; then
   . "$DOT_MI_DIR/p-completion.zsh"
 fi
