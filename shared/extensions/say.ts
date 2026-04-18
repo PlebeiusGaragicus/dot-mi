@@ -23,7 +23,7 @@ import { type ChildProcess, spawn } from "node:child_process";
 const URL_REDACTED = "URL redacted";
 const MAX_CHARS = 32_000;
 /** Words per minute for `say -r` */
-const SAY_RATE_WPM = 320;
+const SAY_RATE_WPM = 220;
 
 /** In-memory; synced from `--tts-enable` on every session_start; `/tts-toggle` until next session_start */
 let autoTtsEnabled = false;
