@@ -1,12 +1,24 @@
 ---
 name: tavily
-description: "Search the web via bash+curl against Tavily's REST API. Requires TAVILY_API_KEY env var. No tavily tool exists."
-allowed-tools: Bash
+description: "Search the web via Tavily's REST API. Prefer the tavily_search tool over bash commands when possible."
+allowed-tools: Bash, tavily_search
 ---
 
-## Search Command
+## Quick Start
 
-ALWAYS use this exact command (replace QUERY with your search terms):
+**Preferred approach**: Use the `tavily_search` tool directly for most searches.
+
+```typescript
+{
+  "query": "your search terms",
+  "max_results": 5,
+  "topic": "general"
+}
+```
+
+This returns structured results with titles, URLs, content snippets, and optionally an LLM-generated answer.
+
+**Legacy bash approach**: Use curl+jq when you need more control or the extension isn't available:
 
 ```bash
 curl -sS -X POST 'https://api.tavily.com/search' \
@@ -14,26 +26,6 @@ curl -sS -X POST 'https://api.tavily.com/search' \
   -H "Authorization: Bearer $TAVILY_API_KEY" \
   -d '{"query":"QUERY","max_results":5}' \
   | jq '.results[:5] | .[] | {title, url, content}'
-```
-
-If the query contains quotes or special characters, build the JSON with `jq`:
-
-```bash
-curl -sS -X POST 'https://api.tavily.com/search' \
-  -H 'Content-Type: application/json' \
-  -H "Authorization: Bearer $TAVILY_API_KEY" \
-  -d "$(jq -nc --arg q 'QUERY' '{query:$q,max_results:5}')" \
-  | jq '.results[:5] | .[] | {title, url, content}'
-```
-
-## URLs Only
-
-```bash
-curl -sS -X POST 'https://api.tavily.com/search' \
-  -H 'Content-Type: application/json' \
-  -H "Authorization: Bearer $TAVILY_API_KEY" \
-  -d '{"query":"QUERY","max_results":5}' \
-  | jq -r '.results[:5] | .[].url'
 ```
 
 ## Response Format
@@ -60,14 +52,14 @@ Add these keys to the JSON body as needed:
 - `include_raw_content` -- `true` for full cleaned page content
 - `include_domains` / `exclude_domains` -- JSON arrays of domain strings
 
-Example with news topic and answer:
+## URLs Only
 
 ```bash
 curl -sS -X POST 'https://api.tavily.com/search' \
   -H 'Content-Type: application/json' \
   -H "Authorization: Bearer $TAVILY_API_KEY" \
-  -d '{"query":"QUERY","max_results":5,"topic":"news","include_answer":true}' \
-  | jq '{answer, results: [.results[:5][] | {title, url, content}]}'
+  -d '{"query":"QUERY","max_results":5}' \
+  | jq -r '.results[:5] | .[].url'
 ```
 
 ## Troubleshooting
