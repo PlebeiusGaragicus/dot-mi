@@ -9,3 +9,7 @@
 	path = references/plannotator
 	url = https://github.com/PlebeiusGaragicus/plannotator.git
 	branch = main
+[submodule "tools/pi-portal"]
+	path = tools/pi-portal
+	url = https://github.com/PlebeiusGaragicus/pi-portal.git
+	branch = main
