@@ -4,6 +4,11 @@
  * Provides a structured `tavily_search` tool for web searches without
  * requiring agents to construct bash commands or parse jq output.
  * Also displays plan usage in the footer status bar.
+ * 
+ * TODO: https://docs.tavily.com/documentation/best-practices/best-practices-search
+ * TODO: https://docs.tavily.com/sdk/javascript/reference
+ * TODO: https://docs.tavily.com/documentation/api-reference/introduction
+ * TODO: https://docs.tavily.com/documentation/api-reference/endpoint/search
  *
  * Requires: TAVILY_API_KEY environment variable
  */
@@ -16,8 +21,15 @@ const API_URL = "https://api.tavily.com/search";
 const USAGE_API_URL = "https://api.tavily.com/usage";
 const STATUS_KEY = "tavily-usage";
 
-/** Horizontal bar length (filled + empty segments), before footer truncation. */
-const BAR_LEN = 40;
+/** 
+ * Calculate dynamic bar length based on terminal width.
+ * Uses 80% of terminal width, clamped between 10-60 columns for readability.
+ */
+function getBarLength(): number {
+    const termWidth = process.stdout.columns || 80;
+    // Use 80% of terminal width, clamped between 10-60 for readability
+    return Math.min(60, Math.max(10, Math.floor(termWidth * 0.8)));
+}
 
 interface TavilyResult {
     title: string;
@@ -94,11 +106,13 @@ function formatResults(results: TavilyResult[], answer?: string): string {
 
 function buildBar(used: number, limit: number | null): string {
     if (limit != null && limit > 0) {
+        const barLen = getBarLength();
         const frac = Math.min(1, Math.max(0, used / limit));
-        const filled = Math.round(frac * BAR_LEN);
-        return "#".repeat(filled) + "-".repeat(BAR_LEN - filled);
+        const filled = Math.round(frac * barLen);
+        return "#".repeat(filled) + "-".repeat(barLen - filled);
     }
-    return "?".repeat(BAR_LEN);
+    const barLen = getBarLength();
+    return "?".repeat(barLen);
 }
 
 function pickUsage(data: TavilyUsageResponse): { used: number; limit: number | null; plan: string } {
@@ -170,10 +184,10 @@ async function refreshFooter(ctx: ExtensionContext): Promise<void> {
 export default function (pi: ExtensionAPI) {
     const SearchParamsSchema = Type.Object({
         query: Type.String({ 
-            description: "Search query to look up on the web" 
+            description: "Search query to look up on the web"
         }),
         max_results: Type.Optional(
-            Type.Number({ 
+            Type.Number({
                 description: "Maximum number of results to return (1-20). Default: 5",
                 minimum: 1,
                 maximum: 20
@@ -181,7 +195,8 @@ export default function (pi: ExtensionAPI) {
         ),
         search_depth: Type.Optional(
             Type.String({
-                enum: ["basic", "fast", "advanced", "ultra-fast"],
+                // enum: ["basic", "fast", "advanced", "ultra-fast"], // discourage fast and ultra-fast by excluding them
+                enum: ["basic", "advanced"],
                 description: "Search depth. 'advanced' uses more resources and costs 2 credits."
             })
         ),
@@ -207,7 +222,7 @@ export default function (pi: ExtensionAPI) {
         ),
         include_raw_content: Type.Optional(
             Type.Boolean({
-                description: "Include raw cleaned page content in results"
+                description: "Include raw cleaned page content in results (highly encouraged)"
             })
         ),
         include_domains: Type.Optional(
