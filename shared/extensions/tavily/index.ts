@@ -3,15 +3,21 @@
  *
  * Provides a structured `tavily_search` tool for web searches without
  * requiring agents to construct bash commands or parse jq output.
+ * Also displays plan usage in the footer status bar.
  *
  * Requires: TAVILY_API_KEY environment variable
  */
 
-import type { ExtensionAPI } from "@mariozechner/pi-coding-agent";
+import type { ExtensionAPI, ExtensionContext } from "@mariozechner/pi-coding-agent";
 import { Container, Markdown, Spacer, Text, getMarkdownTheme } from "@mariozechner/pi-tui";
 import { Type } from "@sinclair/typebox";
 
 const API_URL = "https://api.tavily.com/search";
+const USAGE_API_URL = "https://api.tavily.com/usage";
+const STATUS_KEY = "tavily-usage";
+
+/** Horizontal bar length (filled + empty segments), before footer truncation. */
+const BAR_LEN = 40;
 
 interface TavilyResult {
     title: string;
@@ -36,6 +42,23 @@ interface SearchParams {
     include_raw_content?: boolean;
     include_domains?: string[];
     exclude_domains?: string[];
+}
+
+interface TavilyAccount {
+    current_plan?: string;
+    plan_usage?: number;
+    plan_limit?: number;
+}
+
+interface TavilyKeyBucket {
+    usage?: number;
+    limit?: number;
+}
+
+interface TavilyUsageResponse {
+    account?: TavilyAccount;
+    key?: TavilyKeyBucket;
+    detail?: unknown;
 }
 
 function formatResults(results: TavilyResult[], answer?: string): string {
@@ -67,6 +90,81 @@ function formatResults(results: TavilyResult[], answer?: string): string {
     }
     
     return lines.join("\n");
+}
+
+function buildBar(used: number, limit: number | null): string {
+    if (limit != null && limit > 0) {
+        const frac = Math.min(1, Math.max(0, used / limit));
+        const filled = Math.round(frac * BAR_LEN);
+        return "#".repeat(filled) + "-".repeat(BAR_LEN - filled);
+    }
+    return "?".repeat(BAR_LEN);
+}
+
+function pickUsage(data: TavilyUsageResponse): { used: number; limit: number | null; plan: string } {
+    const acc = data.account;
+    const keyBucket = data.key;
+    const used =
+        typeof acc?.plan_usage === "number"
+            ? acc.plan_usage
+            : typeof keyBucket?.usage === "number"
+                ? keyBucket.usage
+                : 0;
+    let limit: number | null =
+        typeof acc?.plan_limit === "number"
+            ? acc.plan_limit
+            : typeof keyBucket?.limit === "number"
+                ? keyBucket.limit
+                : null;
+    const plan = (acc?.current_plan && String(acc.current_plan).trim()) || "Tavily";
+    return { used, limit, plan };
+}
+
+async function formatUsageLine(): Promise<string> {
+    const apiKey = process.env.TAVILY_API_KEY?.trim();
+    if (!apiKey) {
+        return "Tavily: set TAVILY_API_KEY to show plan usage";
+    }
+
+    let res: Response;
+    try {
+        res = await fetch(USAGE_API_URL, {
+            method: "GET",
+            headers: { Authorization: `Bearer ${apiKey}` },
+        });
+    } catch (e) {
+        const msg = e instanceof Error ? e.message : String(e);
+        return `Tavily: request failed (${msg})`;
+    }
+
+    let data: TavilyUsageResponse;
+    try {
+        data = (await res.json()) as TavilyUsageResponse;
+    } catch {
+        return `Tavily: invalid JSON (HTTP ${res.status})`;
+    }
+
+    if (!res.ok) {
+        const err =
+            data.detail !== undefined
+                ? JSON.stringify(data.detail)
+                : JSON.stringify(data);
+        return `Tavily: HTTP ${res.status} ${err}`;
+    }
+
+    const { used, limit, plan } = pickUsage(data);
+    const bar = buildBar(used, limit);
+    const pct =
+        limit != null && limit > 0 ? `${((100 * used) / limit).toFixed(1)}%` : "";
+    const nums = limit != null ? `${used}/${limit}` : `${used} used`;
+    const pctPart = pct ? ` ${pct}` : "";
+    return `Tavily · ${plan} [${bar}] ${nums}${pctPart}`;
+}
+
+async function refreshFooter(ctx: ExtensionContext): Promise<void> {
+    if (!ctx.hasUI) return;
+    const line = await formatUsageLine();
+    ctx.ui.setStatus(STATUS_KEY, line);
 }
 
 export default function (pi: ExtensionAPI) {
@@ -336,6 +434,21 @@ export default function (pi: ExtensionAPI) {
             }
 
             return new Text(preview.trimEnd(), 0, 0);
+        }
+    });
+
+    // Usage status footer hooks
+    pi.on("session_start", async (_event, ctx) => {
+        await refreshFooter(ctx);
+    });
+
+    pi.on("agent_end", async (_event, ctx) => {
+        await refreshFooter(ctx);
+    });
+
+    pi.on("session_shutdown", async (_event, ctx) => {
+        if (ctx.hasUI) {
+            ctx.ui.setStatus(STATUS_KEY, undefined);
         }
     });
 }
